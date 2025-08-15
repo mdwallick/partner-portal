@@ -1,0 +1,127 @@
+// Prisma schema reflecting current tables used in the app
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Partner {
+  id             String   @id @default(uuid())
+  name           String
+  type           PartnerType
+  logo_url       String?  @db.Text
+  organization_id String? @db.Text
+  status         String   @default("active")
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  games          Game[]
+  skus           Sku[]
+  partnerUsers   PartnerUser[]
+}
+
+enum PartnerType {
+  game_studio
+  merch_supplier
+}
+
+model User {
+  id            String   @id @default(uuid())
+  auth0_user_id String   @unique
+  email         String   @unique
+  display_name  String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  partnerUsers  PartnerUser[]
+}
+
+model PartnerUser {
+  id         String      @id @default(uuid())
+  partner    Partner     @relation(fields: [partner_id], references: [id])
+  partner_id String
+  user       User        @relation(fields: [user_id], references: [id])
+  user_id    String
+  role       PartnerRole @default(can_view)
+  status     PartnerUserStatus @default(active)
+  invited_by String?
+  invited_at DateTime   @default(now())
+  joined_at  DateTime?
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  email      String
+
+  @@unique([partner_id, user_id])
+}
+
+enum PartnerRole {
+  can_admin
+  can_manage_members
+  can_view
+}
+
+enum PartnerUserStatus {
+  active
+  pending
+  inactive
+}
+
+model Game {
+  id          String   @id @default(uuid())
+  partner     Partner  @relation(fields: [partner_id], references: [id])
+  partner_id  String
+  name        String
+  type        String?
+  picture_url String?
+  status      String   @default("active")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  client_ids  ClientId[]
+}
+
+model ClientId {
+  id          String   @id @default(uuid())
+  game        Game     @relation(fields: [game_id], references: [id])
+  game_id     String
+  client_name String
+  client_type ClientType
+  client_id   String   @unique
+  created_at  DateTime @default(now())
+  status      String   @default("active")
+}
+
+enum ClientType {
+  native_mobile_android
+  native_mobile_ios
+  web
+  M2M
+}
+
+model Sku {
+  id               String   @id @default(uuid())
+  partner          Partner  @relation(fields: [partner_id], references: [id])
+  partner_id       String
+  name             String
+  category         String?
+  series           String?
+  product_image_url String?
+  status           String   @default("active")
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  user_id       String?
+  action        String
+  resource_type String
+  resource_id   String
+  details       Json?
+  created_at    DateTime @default(now())
+}
+

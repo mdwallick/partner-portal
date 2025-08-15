@@ -1,32 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
-  try {
-    const user = await requireAuth(request);
+    try {
+        const user = await requireAuth(request);
 
-    // For now, we'll return a mock partner since we don't have the full partner-user relationship set up yet
-    // In a real implementation, you would:
-    // 1. Look up the user's partner assignment in FGA
-    // 2. Query the database for the partner details
-    // 3. Return the partner information
+        // Find user and their active partner assignments
+        const userRecord = await prisma.user.findUnique({
+            where: { auth0_user_id: user.sub },
+            include: { partnerUsers: true }
+        });
 
-    // Mock partner data for demonstration
-    const mockPartner = {
-      id: 'partner_001',
-      name: 'Demo Game Studio',
-      type: 'game_studio' as const,
-      logo_url: null,
-      created_at: new Date().toISOString()
-    };
+        if (!userRecord) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
 
-    return NextResponse.json(mockPartner);
-  } catch (error) {
-    console.error('Error fetching partner info:', error);
-    if (error instanceof Error && error.message === 'Authentication required') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const activePartnerIds = userRecord.partnerUsers
+            .filter(pu => pu.status === 'active')
+            .map(pu => pu.partner_id);
+
+        if (activePartnerIds.length === 0) {
+            return NextResponse.json(null);
+        }
+
+        // For now, return the first active partner (can expand to multiple later)
+        const partner = await prisma.partner.findFirst({ where: { id: { in: activePartnerIds } } });
+        return NextResponse.json(partner);
+    } catch (error) {
+        console.error('Error fetching partner info:', error);
+        if (error instanceof Error && error.message === 'Authentication required') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
 } 

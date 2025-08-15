@@ -4,7 +4,7 @@
 
 **Product Name:** Partner Portal for Music Artists\
 **Purpose:**\
-Enable secure access for external partners (artists and producers) to manage their songs and albums. Auth0 will be used as the identity provider and Auth0 FGA to model and manage relationships. Artists will be represented as Auth0 organizations. The application framework will use NextJS.
+Enable secure access for external partners (artists and producers) to manage their songs and albums. Auth0 will be used as the identity provider and Auth0 FGA to model and manage relationships. Artists will be represented as Auth0 organizations. The application framework will use NextJS, postgresql for the database, and Prisma for database operations.
 
 ---
 
