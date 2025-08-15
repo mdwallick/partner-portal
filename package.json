@@ -9,6 +9,7 @@
         "format": "prettier --write .",
         "lint": "next lint",
         "type-check": "tsc --noEmit",
+        "vercel-build": "prisma migrate deploy && next build",
         "prisma:migrate": "dotenv -e .env.local -- prisma migrate dev",
         "prisma:pull": "dotenv -e .env.local -- prisma db pull",
         "prisma:push": "dotenv -e .env.local -- prisma db push",
