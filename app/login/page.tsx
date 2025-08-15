@@ -1,29 +1,30 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
-import { Gamepad2, ShoppingBag, Users } from 'lucide-react';
+//import { useOktaAuth } from '@/lib/use-okta-auth';
+import { useUser } from "@auth0/nextjs-auth0"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect } from "react"
+import { Gamepad2, ShoppingBag, Users } from "lucide-react"
 
 export default function LoginPage() {
-  const { user, isLoading, login } = useOktaAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { user, isLoading } = useUser()
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    const isLogout = searchParams.get('logout') === 'true';
-    const hasError = searchParams.get('error');
-    
+    const isLogout = searchParams.get("logout") === "true"
+    const hasError = searchParams.get("error")
+
     // If user is logged in and this is not a logout redirect, go to dashboard
     if (user && !isLogout) {
-      router.push('/dashboard');
+      router.push("/dashboard")
     }
-  }, [user, router, searchParams]);
+  }, [user, router, searchParams])
 
   const handleLogin = () => {
     // Redirect to Okta's login page
-    login();
-  };
+    window.location.href = "/auth/login"
+  }
 
   if (isLoading) {
     return (
@@ -33,30 +34,24 @@ export default function LoginPage() {
           <p className="text-gray-400">Loading...</p>
         </div>
       </div>
-    );
+    )
   }
 
-  const isLogout = searchParams.get('logout') === 'true';
-  const hasError = searchParams.get('error');
+  const isLogout = searchParams.get("logout") === "true"
+  const hasError = searchParams.get("error")
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-8 text-center">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Partner Portal
-            </h1>
-            <p className="text-gray-400">
-              Manage your games and products with ease
-            </p>
+            <h1 className="text-3xl font-bold text-white mb-2">Partner Portal</h1>
+            <p className="text-gray-400">Manage your games and products with ease</p>
           </div>
 
           {hasError && (
             <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-              <p className="text-red-300 text-sm">
-                ❌ Logout failed. Please try again.
-              </p>
+              <p className="text-red-300 text-sm">❌ Logout failed. Please try again.</p>
             </div>
           )}
 
@@ -71,7 +66,7 @@ export default function LoginPage() {
                 <span className="text-sm">Merch Suppliers</span>
               </div>
             </div>
-            
+
             <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
               <div className="flex items-center justify-center space-x-2 text-orange-400">
                 <Users className="w-5 h-5" />
@@ -80,21 +75,16 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button
-            onClick={handleLogin}
-            className="w-full text-lg py-3 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-          >
-            Sign In with Okta
-          </button>
+          <a href="/auth/login">
+            <button className="w-full text-lg py-3 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+              Sign In with Auth0
+            </button>
+          </a>
 
-          <p className="text-xs text-gray-500 mt-4">
-            Secure authentication powered by Okta
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            Secure authorization powered by Auth0 FGA
-          </p>
+          <p className="text-xs text-gray-500 mt-4">Secure authentication powered by Okta</p>
+          <p className="text-xs text-gray-500 mt-1">Secure authorization powered by Auth0 FGA</p>
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

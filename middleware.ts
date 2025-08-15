@@ -1,39 +1,18 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server"
+import { auth0 } from "./lib/auth0"
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  // Check if user is authenticated by looking for the okta access token cookie
-  const hasAccessToken = request.cookies.has('okta_access_token');
-  
-  // Protect dashboard routes
-  if (pathname.startsWith('/dashboard')) {
-    if (!hasAccessToken) {
-      console.log('Middleware: No access token found, redirecting to login');
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-  }
-  
-  // Protect API routes (except auth endpoints)
-  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/')) {
-    if (!hasAccessToken) {
-      console.log('Middleware: No access token found for API route');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
-  
-  return NextResponse.next();
+export async function middleware(request: NextRequest) {
+  return await auth0.middleware(request)
 }
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/api/partners/:path*',
-    '/api/games/:path*', 
-    '/api/sku/:path*',
-    '/api/admin/:path*',
-    '/api/debug-session',
-    '/api/log-navigation'
-  ]
-}; 
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+  ],
+}

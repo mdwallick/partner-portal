@@ -1,114 +1,116 @@
-'use client';
+"use client"
 
-import { useUser } from '@auth0/nextjs-auth0/client';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, ShoppingBag, Upload } from 'lucide-react';
+import { useUser } from "@auth0/nextjs-auth0/client"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, ShoppingBag, Upload } from "lucide-react"
 
 interface Partner {
-  id: string;
-  name: string;
-  type: 'game_studio' | 'merch_supplier';
-  logo_url?: string;
+  id: string
+  name: string
+  type: "game_studio" | "merch_supplier"
+  logo_url?: string
 }
 
 export default function AddProductPage() {
-  const { user, isLoading } = useUser();
-  const params = useParams();
-  const router = useRouter();
-  const partnerId = params.id as string;
-  
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  
+  const { user, isLoading } = useUser()
+  const params = useParams()
+  const router = useRouter()
+  const partnerId = params.id as string
+
+  const [partner, setPartner] = useState<Partner | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
   const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    image_url: '',
-    status: 'active'
-  });
+    name: "",
+    category: "",
+    image_url: "",
+    status: "active",
+  })
 
   useEffect(() => {
     if (!isLoading && user && partnerId) {
-      fetchPartnerData();
+      fetchPartnerData()
     }
-  }, [user, isLoading, partnerId]);
+  }, [user, isLoading, partnerId])
 
   const fetchPartnerData = async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`/api/partners/${partnerId}`);
+      setLoading(true)
+      const response = await fetch(`/api/partners/${partnerId}`)
       if (response.ok) {
-        const partnerData = await response.json();
-        setPartner(partnerData);
-        
+        const partnerData = await response.json()
+        setPartner(partnerData)
+
         // Check if this is actually a merch supplier
-        if (partnerData.type !== 'merch_supplier') {
-          setError('This partner is not a merchandise supplier');
+        if (partnerData.type !== "merch_supplier") {
+          setError("This partner is not a merchandise supplier")
         }
       } else {
-        setError('Partner not found');
+        setError("Partner not found")
       }
     } catch (error) {
-      console.error('Error fetching partner data:', error);
-      setError('Failed to load partner data');
+      console.error("Error fetching partner data:", error)
+      setError("Failed to load partner data")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
-    }));
-  };
+      [name]: value,
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     if (!formData.name.trim()) {
-      setError('Product name is required');
-      return;
+      setError("Product name is required")
+      return
     }
 
     try {
-      setSubmitting(true);
-      setError('');
+      setSubmitting(true)
+      setError("")
 
       const response = await fetch(`/api/partners/${partnerId}/skus`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (response.ok) {
-        const newProduct = await response.json();
-        router.push(`/dashboard/partners/${partnerId}`);
+        const newProduct = await response.json()
+        router.push(`/dashboard/partners/${partnerId}`)
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to create product');
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to create product")
       }
     } catch (error) {
-      console.error('Error creating product:', error);
-      setError('Failed to create product');
+      console.error("Error creating product:", error)
+      setError("Failed to create product")
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -119,7 +121,7 @@ export default function AddProductPage() {
           <p className="text-gray-600">Please sign in to access the partner portal.</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (error || !partner) {
@@ -127,27 +129,37 @@ export default function AddProductPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Error</h1>
-          <p className="text-gray-600 mb-6">{error || 'The requested partner could not be found.'}</p>
-          <Link href="/dashboard/partners" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+          <p className="text-gray-600 mb-6">
+            {error || "The requested partner could not be found."}
+          </p>
+          <Link
+            href="/dashboard/partners"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
             Back to Partners
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
-  if (partner.type !== 'merch_supplier') {
+  if (partner.type !== "merch_supplier") {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Partner Type</h1>
-          <p className="text-gray-600 mb-6">This partner is not a merchandise supplier and cannot have products added.</p>
-          <Link href={`/dashboard/partners/${partnerId}`} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+          <p className="text-gray-600 mb-6">
+            This partner is not a merchandise supplier and cannot have products added.
+          </p>
+          <Link
+            href={`/dashboard/partners/${partnerId}`}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
             Back to Partner
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -162,7 +174,7 @@ export default function AddProductPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to {partner.name}
           </Link>
-          
+
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -298,5 +310,5 @@ export default function AddProductPage() {
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

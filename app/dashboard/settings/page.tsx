@@ -1,19 +1,19 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useState } from 'react';
-import { User, Shield, Bell, Globe, Key, Database, Trash2 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useState } from "react"
+import { User, Shield, Bell, Globe, Key, Database, Trash2 } from "lucide-react"
+import toast from "react-hot-toast"
 
 export default function SettingsPage() {
-  const { user } = useOktaAuth();
-  const [activeTab, setActiveTab] = useState('profile');
+  const { user } = useOktaAuth()
+  const [activeTab, setActiveTab] = useState("profile")
 
   const tabs = [
-    { id: 'profile', name: 'Profile', icon: User },
-    { id: 'security', name: 'Security', icon: Shield },
-    { id: 'notifications', name: 'Notifications', icon: Bell },
-  ];
+    { id: "profile", name: "Profile", icon: User },
+    { id: "security", name: "Security", icon: Shield },
+    { id: "notifications", name: "Notifications", icon: Bell },
+  ]
 
   const renderProfileTab = () => (
     <div className="space-y-6">
@@ -27,7 +27,7 @@ export default function SettingsPage() {
           <label className="block text-sm font-medium text-gray-300">Email</label>
           <input
             type="email"
-            value={user?.email || ''}
+            value={user?.email || ""}
             disabled
             className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-gray-300 placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
           />
@@ -38,7 +38,7 @@ export default function SettingsPage() {
           <label className="block text-sm font-medium text-gray-300">Name</label>
           <input
             type="text"
-            value={user?.name || ''}
+            value={user?.name || ""}
             disabled
             className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-gray-300 placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
           />
@@ -60,7 +60,7 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
-  );
+  )
 
   const renderSecurityTab = () => (
     <div className="space-y-6">
@@ -74,7 +74,9 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="text-sm font-medium text-white">Two-Factor Authentication</h4>
-              <p className="text-sm text-gray-400">Add an extra layer of security to your account</p>
+              <p className="text-sm text-gray-400">
+                Add an extra layer of security to your account
+              </p>
             </div>
             <button className="inline-flex items-center px-3 py-2 border border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
               Configure
@@ -107,7 +109,7 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
-  );
+  )
 
   const renderNotificationsTab = () => (
     <div className="space-y-6">
@@ -157,20 +159,20 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
-  );
+  )
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'profile':
-        return renderProfileTab();
-      case 'security':
-        return renderSecurityTab();
-      case 'notifications':
-        return renderNotificationsTab();
+      case "profile":
+        return renderProfileTab()
+      case "security":
+        return renderSecurityTab()
+      case "notifications":
+        return renderNotificationsTab()
       default:
-        return renderProfileTab();
+        return renderProfileTab()
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -185,22 +187,22 @@ export default function SettingsPage() {
           {/* Tabs */}
           <div className="border-b border-gray-700">
             <nav className="-mb-px flex space-x-8">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
+              {tabs.map(tab => {
+                const Icon = tab.icon
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
                       activeTab === tab.id
-                        ? 'border-orange-500 text-orange-400'
-                        : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'
+                        ? "border-orange-500 text-orange-400"
+                        : "border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
                     <span>{tab.name}</span>
                   </button>
-                );
+                )
               })}
             </nav>
           </div>
@@ -212,5 +214,5 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

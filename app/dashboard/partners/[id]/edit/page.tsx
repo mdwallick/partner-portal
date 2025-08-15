@@ -1,125 +1,125 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Save } from 'lucide-react';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Save } from "lucide-react"
 
 interface Partner {
-  id: string;
-  name: string;
-  type: 'game_studio' | 'merch_supplier';
-  logo_url?: string;
-  created_at: string;
+  id: string
+  name: string
+  type: "game_studio" | "merch_supplier"
+  logo_url?: string
+  created_at: string
 }
 
 export default function EditPartnerPage() {
-  const { user, isLoading } = useOktaAuth();
-  const params = useParams();
-  const router = useRouter();
-  const partnerId = params.id as string;
-  
-  const [partner, setPartner] = useState<Partner | null>(null);
+  const { user, isLoading } = useOktaAuth()
+  const params = useParams()
+  const router = useRouter()
+  const partnerId = params.id as string
+
+  const [partner, setPartner] = useState<Partner | null>(null)
   const [formData, setFormData] = useState({
-    name: '',
-    logo_url: ''
-  });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+    name: "",
+    logo_url: "",
+  })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!isLoading && user && partnerId) {
-      fetchPartnerData();
+      fetchPartnerData()
     }
-  }, [user, isLoading, partnerId]);
+  }, [user, isLoading, partnerId])
 
   const fetchPartnerData = async () => {
     try {
-      setLoading(true);
-      
+      setLoading(true)
+
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/partners/${partnerId}`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       if (response.ok) {
-        const partnerData = await response.json();
-        setPartner(partnerData);
+        const partnerData = await response.json()
+        setPartner(partnerData)
         setFormData({
           name: partnerData.name,
-          logo_url: partnerData.logo_url || ''
-        });
+          logo_url: partnerData.logo_url || "",
+        })
       } else {
-        setError('Partner not found');
+        setError("Partner not found")
       }
     } catch (error) {
-      console.error('Error fetching partner data:', error);
-      setError('Failed to load partner data');
+      console.error("Error fetching partner data:", error)
+      setError("Failed to load partner data")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setError('');
+    e.preventDefault()
+    setSaving(true)
+    setError("")
 
     try {
       // Get the access token
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/partners/${partnerId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (response.ok) {
-        router.push(`/dashboard/partners/${partnerId}`);
+        router.push(`/dashboard/partners/${partnerId}`)
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to update partner');
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to update partner")
       }
     } catch (error) {
-      setError('An error occurred while updating the partner');
+      setError("An error occurred while updating the partner")
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
-    }));
-  };
+      [name]: value,
+    }))
+  }
 
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -130,7 +130,7 @@ export default function EditPartnerPage() {
           <p className="text-gray-400">Please sign in to access the partner portal.</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (error || !partner) {
@@ -138,22 +138,27 @@ export default function EditPartnerPage() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Partner Not Found</h1>
-          <p className="text-gray-400 mb-6">{error || 'The requested partner could not be found.'}</p>
-          <Link href="/dashboard/partners" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+          <p className="text-gray-400 mb-6">
+            {error || "The requested partner could not be found."}
+          </p>
+          <Link
+            href="/dashboard/partners"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+          >
             Back to Partners
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   const getPartnerTypeLabel = (type: string) => {
-    return type === 'game_studio' ? 'Game Studio' : 'Merchandise Supplier';
-  };
+    return type === "game_studio" ? "Game Studio" : "Merchandise Supplier"
+  }
 
   const getPartnerTypeIcon = (type: string) => {
-    return type === 'game_studio' ? '🎮' : '🛍️';
-  };
+    return type === "game_studio" ? "🎮" : "🛍️"
+  }
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -176,8 +181,8 @@ export default function EditPartnerPage() {
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               {partner.logo_url ? (
-                <img 
-                  src={partner.logo_url} 
+                <img
+                  src={partner.logo_url}
                   alt={`${partner.name} logo`}
                   className="h-16 w-16 rounded-lg object-cover"
                 />
@@ -247,9 +252,7 @@ export default function EditPartnerPage() {
 
             {/* Partner Type (Read-only) */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Partner Type
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Partner Type</label>
               <div className="flex items-center space-x-2 p-3 bg-gray-700 border border-gray-600 rounded-lg">
                 <span className="text-lg">{getPartnerTypeIcon(partner.type)}</span>
                 <span className="text-white">{getPartnerTypeLabel(partner.type)}</span>
@@ -266,12 +269,12 @@ export default function EditPartnerPage() {
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0">
                     {formData.logo_url ? (
-                      <img 
-                        src={formData.logo_url} 
+                      <img
+                        src={formData.logo_url}
                         alt="Logo preview"
                         className="h-16 w-16 rounded-lg object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
+                        onError={e => {
+                          e.currentTarget.style.display = "none"
                         }}
                       />
                     ) : (
@@ -313,5 +316,5 @@ export default function EditPartnerPage() {
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

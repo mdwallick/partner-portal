@@ -1,97 +1,97 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Gamepad2, Plus, Edit, Trash2, Smartphone, Globe, Monitor } from 'lucide-react';
-import { Game } from '@/lib/database';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Gamepad2, Plus, Edit, Trash2, Smartphone, Globe, Monitor } from "lucide-react"
+import { Game } from "@/lib/database"
 
 export default function GamesPage() {
-  const { user, isLoading } = useOktaAuth();
-  const [games, setGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, isLoading } = useOktaAuth()
+  const [games, setGames] = useState<Game[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!isLoading && user) {
-      fetchGames();
+      fetchGames()
     }
-  }, [user, isLoading]);
+  }, [user, isLoading])
 
   const fetchGames = async () => {
     try {
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
-      const response = await fetch('/api/games', {
+
+      const { accessToken } = await tokenResponse.json()
+
+      const response = await fetch("/api/games", {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       if (response.ok) {
-        const data = await response.json();
-        setGames(data);
+        const data = await response.json()
+        setGames(data)
       }
     } catch (error) {
-      console.error('Error fetching games:', error);
+      console.error("Error fetching games:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleDeleteGame = async (gameId: string) => {
-    if (!confirm('Are you sure you want to revoke this game?')) {
-      return;
+    if (!confirm("Are you sure you want to revoke this game?")) {
+      return
     }
 
     try {
       // Get the access token
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/games/${gameId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
 
       if (response.ok) {
-        setGames(games.filter(game => game.id !== gameId));
+        setGames(games.filter(game => game.id !== gameId))
       }
     } catch (error) {
-      console.error('Error deleting game:', error);
+      console.error("Error deleting game:", error)
     }
-  };
+  }
 
   const getClientTypeIcon = (type: string) => {
     switch (type) {
-      case 'native_mobile_android':
-      case 'native_mobile_ios':
-        return <Smartphone className="h-4 w-4" />;
-      case 'web':
-        return <Globe className="h-4 w-4" />;
-      case 'M2M':
-        return <Monitor className="h-4 w-4" />;
+      case "native_mobile_android":
+      case "native_mobile_ios":
+        return <Smartphone className="h-4 w-4" />
+      case "web":
+        return <Globe className="h-4 w-4" />
+      case "M2M":
+        return <Monitor className="h-4 w-4" />
       default:
-        return <Globe className="h-4 w-4" />;
+        return <Globe className="h-4 w-4" />
     }
-  };
+  }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
-    );
+    )
   }
 
   return (
@@ -102,10 +102,7 @@ export default function GamesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Games</h1>
           <p className="text-gray-600">Manage your game portfolio</p>
         </div>
-        <Link
-          href="/dashboard/games/new"
-          className="btn-primary flex items-center space-x-2"
-        >
+        <Link href="/dashboard/games/new" className="btn-primary flex items-center space-x-2">
           <Plus className="h-5 w-5" />
           <span>Add Game</span>
         </Link>
@@ -123,7 +120,7 @@ export default function GamesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {games.map((game) => (
+          {games.map(game => (
             <div key={game.id} className="card">
               <div className="flex items-start justify-between mb-4">
                 {game.picture_url ? (
@@ -154,10 +151,8 @@ export default function GamesPage() {
               </div>
 
               <h3 className="font-semibold text-gray-900 mb-2">{game.name}</h3>
-              
-              {game.type && (
-                <p className="text-sm text-gray-600 mb-2">Type: {game.type}</p>
-              )}
+
+              {game.type && <p className="text-sm text-gray-600 mb-2">Type: {game.type}</p>}
 
               <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                 <span>Client IDs: {game.client_count || 0}</span>
@@ -183,5 +178,5 @@ export default function GamesPage() {
         </div>
       )}
     </div>
-  );
-} 
+  )
+}

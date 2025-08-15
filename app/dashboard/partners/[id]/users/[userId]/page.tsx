@@ -1,205 +1,209 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { ArrowLeft, Save, User, Mail, Shield, Trash2 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import toast from 'react-hot-toast';
+import { useEffect, useState } from "react"
+import { ArrowLeft, Save, User, Mail, Shield, Trash2 } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import toast from "react-hot-toast"
 
 interface User {
-  id: string;
-  email: string;
-  display_name?: string;
-  role: string;
-  created_at: string;
-  auth0_user_id?: string;
+  id: string
+  email: string
+  display_name?: string
+  role: string
+  created_at: string
+  auth0_user_id?: string
 }
 
 interface Partner {
-  id: string;
-  name: string;
-  type: 'game_studio' | 'merch_supplier';
+  id: string
+  name: string
+  type: "game_studio" | "merch_supplier"
 }
 
 export default function UserDetailsPage() {
-  const params = useParams();
-  const router = useRouter();
-  const partnerId = params.id as string;
-  const userId = params.userId as string;
-  
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [userCanManageMembers, setUserCanManageMembers] = useState(false);
+  const params = useParams()
+  const router = useRouter()
+  const partnerId = params.id as string
+  const userId = params.userId as string
+
+  const [partner, setPartner] = useState<Partner | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [userCanManageMembers, setUserCanManageMembers] = useState(false)
   const [formData, setFormData] = useState({
-    display_name: '',
-    role: ''
-  });
+    display_name: "",
+    role: "",
+  })
 
   useEffect(() => {
     if (partnerId && userId) {
-      fetchPartnerData();
-      fetchUserData();
+      fetchPartnerData()
+      fetchUserData()
     }
-  }, [partnerId, userId]);
+  }, [partnerId, userId])
 
   const fetchPartnerData = async () => {
     try {
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/partners/${partnerId}`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       if (response.ok) {
-        const data = await response.json();
-        setPartner(data);
+        const data = await response.json()
+        setPartner(data)
       }
     } catch (error) {
-      console.error('Error fetching partner:', error);
+      console.error("Error fetching partner:", error)
     }
-  };
+  }
 
   const fetchUserData = async () => {
     try {
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       if (response.ok) {
-        const data = await response.json();
-        setUser(data);
-        setUserCanManageMembers(data.userCanManageMembers || false);
+        const data = await response.json()
+        setUser(data)
+        setUserCanManageMembers(data.userCanManageMembers || false)
         setFormData({
-          display_name: data.display_name || '',
-          role: data.role
-        });
+          display_name: data.display_name || "",
+          role: data.role,
+        })
       } else {
-        toast.error('Failed to fetch user details');
+        toast.error("Failed to fetch user details")
       }
     } catch (error) {
-      console.error('Error fetching user:', error);
-      toast.error('Failed to fetch user details');
+      console.error("Error fetching user:", error)
+      toast.error("Failed to fetch user details")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+    e.preventDefault()
+    setSaving(true)
 
     try {
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (response.ok) {
-        toast.success('User updated successfully!');
-        fetchUserData(); // Refresh user data
+        toast.success("User updated successfully!")
+        fetchUserData() // Refresh user data
       } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to update user');
+        const error = await response.json()
+        toast.error(error.error || "Failed to update user")
       }
     } catch (error) {
-      console.error('Error updating user:', error);
-      toast.error('Failed to update user');
+      console.error("Error updating user:", error)
+      toast.error("Failed to update user")
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   const handleDeleteUser = async () => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone and will remove the user from Auth0, FGA, and the database.')) {
-      return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this user? This action cannot be undone and will remove the user from Auth0, FGA, and the database."
+      )
+    ) {
+      return
     }
 
-    setDeleting(true);
+    setDeleting(true)
 
     try {
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
 
       if (response.ok) {
-        toast.success('User deleted successfully!');
-        router.push(`/dashboard/partners/${partnerId}/users`);
+        toast.success("User deleted successfully!")
+        router.push(`/dashboard/partners/${partnerId}/users`)
       } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to delete user');
+        const error = await response.json()
+        toast.error(error.error || "Failed to delete user")
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
+      console.error("Error deleting user:", error)
+      toast.error("Failed to delete user")
     } finally {
-      setDeleting(false);
+      setDeleting(false)
     }
-  };
+  }
 
   const getRoleDescription = (role: string) => {
     switch (role) {
-      case 'can_admin':
-      case 'partner_admin':
-        return 'Full administrative access to the partner organization';
-      case 'can_manage_members':
-      case 'partner_manager':
-        return 'Can add, remove, and manage team members';
-      case 'can_view':
-      case 'partner_viewer':
-        return 'Can view partner information and data';
+      case "can_admin":
+      case "partner_admin":
+        return "Full administrative access to the partner organization"
+      case "can_manage_members":
+      case "partner_manager":
+        return "Can add, remove, and manage team members"
+      case "can_view":
+      case "partner_viewer":
+        return "Can view partner information and data"
       default:
-        return '';
+        return ""
     }
-  };
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -216,7 +220,7 @@ export default function UserDetailsPage() {
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -233,7 +237,7 @@ export default function UserDetailsPage() {
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Back to Team Members
               </Link>
-              
+
               {userCanManageMembers && (
                 <button
                   onClick={handleDeleteUser}
@@ -254,12 +258,8 @@ export default function UserDetailsPage() {
                 </button>
               )}
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              User Details
-            </h1>
-            <p className="text-lg text-gray-400">
-              Manage user details for {partner?.name}
-            </p>
+            <h1 className="text-3xl font-bold text-white mb-2">User Details</h1>
+            <p className="text-lg text-gray-400">Manage user details for {partner?.name}</p>
           </div>
 
           {/* User Info Cards */}
@@ -270,7 +270,7 @@ export default function UserDetailsPage() {
                 <User className="h-5 w-5 text-gray-400 mr-2" />
                 <h3 className="text-lg font-medium text-white">User Information</h3>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -281,20 +281,18 @@ export default function UserDetailsPage() {
                     <span className="text-sm text-white">{user.email}</span>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Auth0 User ID
                   </label>
                   <span className="text-sm text-white font-mono">
-                    {user.auth0_user_id || 'Not available'}
+                    {user.auth0_user_id || "Not available"}
                   </span>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Joined
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Joined</label>
                   <span className="text-sm text-white">
                     {new Date(user.created_at).toLocaleDateString()}
                   </span>
@@ -308,26 +306,26 @@ export default function UserDetailsPage() {
                 <Shield className="h-5 w-5 text-gray-400 mr-2" />
                 <h3 className="text-lg font-medium text-white">Current Role</h3>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Role
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Role</label>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-blue-300">
-                    {user.role === 'can_admin' || user.role === 'partner_admin' ? 'Can Admin' :
-                     user.role === 'can_manage_members' || user.role === 'partner_manager' ? 'Can Manage Members' :
-                     user.role === 'can_view' || user.role === 'partner_viewer' ? 'Can View' : user.role}
+                    {user.role === "can_admin" || user.role === "partner_admin"
+                      ? "Can Admin"
+                      : user.role === "can_manage_members" || user.role === "partner_manager"
+                        ? "Can Manage Members"
+                        : user.role === "can_view" || user.role === "partner_viewer"
+                          ? "Can View"
+                          : user.role}
                   </span>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Description
                   </label>
-                  <p className="text-sm text-gray-400">
-                    {getRoleDescription(user.role)}
-                  </p>
+                  <p className="text-sm text-gray-400">{getRoleDescription(user.role)}</p>
                 </div>
               </div>
             </div>
@@ -336,20 +334,23 @@ export default function UserDetailsPage() {
           {/* Edit Form */}
           <div className="bg-gray-800 shadow rounded-lg p-6 border border-gray-700">
             <h3 className="text-lg font-medium text-white mb-6">
-              {userCanManageMembers ? 'Edit User Details' : 'User Details (Read Only)'}
+              {userCanManageMembers ? "Edit User Details" : "User Details (Read Only)"}
             </h3>
-            
+
             <form onSubmit={handleSave} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="display_name" className="block text-sm font-medium text-gray-300 mb-2">
+                  <label
+                    htmlFor="display_name"
+                    className="block text-sm font-medium text-gray-300 mb-2"
+                  >
                     Display Name
                   </label>
                   <input
                     type="text"
                     id="display_name"
                     value={formData.display_name}
-                    onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                    onChange={e => setFormData({ ...formData, display_name: e.target.value })}
                     disabled={!userCanManageMembers}
                     className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-white placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Enter display name"
@@ -358,7 +359,7 @@ export default function UserDetailsPage() {
                     This name will be updated in Auth0 and the database
                   </p>
                 </div>
-                
+
                 <div>
                   <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-2">
                     Role
@@ -366,7 +367,7 @@ export default function UserDetailsPage() {
                   <select
                     id="role"
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    onChange={e => setFormData({ ...formData, role: e.target.value })}
                     disabled={!userCanManageMembers}
                     className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -379,7 +380,7 @@ export default function UserDetailsPage() {
                   </p>
                 </div>
               </div>
-              
+
               {userCanManageMembers && (
                 <div className="flex justify-end">
                   <button
@@ -406,5 +407,5 @@ export default function UserDetailsPage() {
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

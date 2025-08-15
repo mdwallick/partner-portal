@@ -1,129 +1,129 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Plus, Search, Filter, Users, Shield, Eye } from 'lucide-react';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { Plus, Search, Filter, Users, Shield, Eye } from "lucide-react"
 
 interface Partner {
-  id: string;
-  name: string;
-  type: 'game_studio' | 'merch_supplier';
-  logo_url?: string;
-  organization_id?: string;
-  created_at: string;
-  assigned_cr_admin?: string;
+  id: string
+  name: string
+  type: "game_studio" | "merch_supplier"
+  logo_url?: string
+  organization_id?: string
+  created_at: string
+  assigned_cr_admin?: string
 }
 
 interface UserRole {
-  is_cr_super_admin: boolean;
-  is_cr_admin: boolean;
+  is_cr_super_admin: boolean
+  is_cr_admin: boolean
 }
 
 export default function PartnersPage() {
-  const { user, isLoading } = useOktaAuth();
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'game_studio' | 'merch_supplier'>('all');
+  const { user, isLoading } = useOktaAuth()
+  const [partners, setPartners] = useState<Partner[]>([])
+  const [userRole, setUserRole] = useState<UserRole | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterType, setFilterType] = useState<"all" | "game_studio" | "merch_supplier">("all")
 
   // Log when page renders
   useEffect(() => {
-    console.log('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n');
-    console.log('📄 Partners Page Rendered');
-  }, []);
+    console.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    console.log("📄 Partners Page Rendered")
+  }, [])
 
   useEffect(() => {
     if (user?.sub) {
-      fetchUserRole();
-      fetchPartners();
+      fetchUserRole()
+      fetchPartners()
     }
-  }, [user?.sub]);
+  }, [user?.sub])
 
   const fetchUserRole = async () => {
     try {
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
-      const response = await fetch('/api/admin/test-permissions', {
+
+      const { accessToken } = await tokenResponse.json()
+
+      const response = await fetch("/api/admin/test-permissions", {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json()
         setUserRole({
           is_cr_super_admin: data.permissions.super_admin,
-          is_cr_admin: data.permissions.super_admin // For now, treat super admin as cr_admin too
-        });
+          is_cr_admin: data.permissions.super_admin, // For now, treat super admin as cr_admin too
+        })
       }
     } catch (error) {
-      console.error('Error fetching user role:', error);
+      console.error("Error fetching user role:", error)
     }
-  };
+  }
 
   const fetchPartners = async () => {
     try {
-      setLoading(true);
-      
+      setLoading(true)
+
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       // Call the partners API with the Authorization header
-      const response = await fetch('/api/partners', {
+      const response = await fetch("/api/partners", {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-      
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+
       if (response.ok) {
-        const data = await response.json();
-        setPartners(data);
+        const data = await response.json()
+        setPartners(data)
       } else {
-        console.error('Failed to fetch partners:', response.status, response.statusText);
+        console.error("Failed to fetch partners:", response.status, response.statusText)
       }
     } catch (error) {
-      console.error('Error fetching partners:', error);
+      console.error("Error fetching partners:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const filteredPartners = partners.filter(partner => {
-    const matchesSearch = partner.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterType === 'all' || partner.type === filterType;
-    return matchesSearch && matchesFilter;
-  });
+    const matchesSearch = partner.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesFilter = filterType === "all" || partner.type === filterType
+    return matchesSearch && matchesFilter
+  })
 
   const getPartnerTypeLabel = (type: string) => {
-    return type === 'game_studio' ? 'Game Studio' : 'Merchandise Supplier';
-  };
+    return type === "game_studio" ? "Game Studio" : "Merchandise Supplier"
+  }
 
   const getPartnerTypeIcon = (type: string) => {
-    return type === 'game_studio' ? '🎮' : '🛍️';
-  };
+    return type === "game_studio" ? "🎮" : "🛍️"
+  }
 
   const getPartnerTypeColor = (type: string) => {
-    return type === 'game_studio' ? 'bg-blue-900 text-blue-300' : 'bg-green-900 text-green-300';
-  };
+    return type === "game_studio" ? "bg-blue-900 text-blue-300" : "bg-green-900 text-green-300"
+  }
 
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -134,7 +134,7 @@ export default function PartnersPage() {
           <p className="text-gray-400">Please sign in to access the partner portal.</p>
         </div>
       </div>
-    );
+    )
   }
 
   // All users can access the partners page, but they will only see partners they have access to via FGA
@@ -179,7 +179,7 @@ export default function PartnersPage() {
                   type="text"
                   placeholder="Search partners..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent pl-10"
                 />
               </div>
@@ -188,7 +188,7 @@ export default function PartnersPage() {
               <Filter className="h-4 w-4 text-gray-400" />
               <select
                 value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
+                onChange={e => setFilterType(e.target.value as any)}
                 className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
                 <option value="all">All Types</option>
@@ -223,24 +223,26 @@ export default function PartnersPage() {
                 </tr>
               </thead>
               <tbody className="bg-gray-800 divide-y divide-gray-700">
-                {filteredPartners.map((partner) => (
+                {filteredPartners.map(partner => (
                   <tr key={partner.id} className="hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
                           {partner.logo_url ? (
-                            <img 
-                              src={partner.logo_url} 
+                            <img
+                              src={partner.logo_url}
                               alt={`${partner.name} logo`}
                               className="h-10 w-10 rounded-lg object-cover"
-                              onError={(e) => {
+                              onError={e => {
                                 // Hide the broken image and show fallback
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                e.currentTarget.style.display = "none"
+                                e.currentTarget.nextElementSibling?.classList.remove("hidden")
                               }}
                             />
                           ) : null}
-                          <div className={`h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg font-bold ${partner.logo_url ? 'hidden' : ''}`}>
+                          <div
+                            className={`h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg font-bold ${partner.logo_url ? "hidden" : ""}`}
+                          >
                             {partner.name.charAt(0).toUpperCase()}
                           </div>
                         </div>
@@ -252,7 +254,9 @@ export default function PartnersPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <span className="text-lg mr-2">{getPartnerTypeIcon(partner.type)}</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPartnerTypeColor(partner.type)}`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPartnerTypeColor(partner.type)}`}
+                        >
                           {getPartnerTypeLabel(partner.type)}
                         </span>
                       </div>
@@ -301,18 +305,25 @@ export default function PartnersPage() {
             <div className="text-center py-12">
               <div className="mx-auto h-24 w-24 text-gray-400 mb-4">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-white mb-2">No partners found</h3>
               <p className="text-gray-400 mb-6">
-                {searchTerm || filterType !== 'all' 
-                  ? 'Try adjusting your search or filter criteria.'
-                  : 'Get started by creating your first partner.'
-                }
+                {searchTerm || filterType !== "all"
+                  ? "Try adjusting your search or filter criteria."
+                  : "Get started by creating your first partner."}
               </p>
-              {!searchTerm && filterType === 'all' && (
-                <Link href="/dashboard/partners/new" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+              {!searchTerm && filterType === "all" && (
+                <Link
+                  href="/dashboard/partners/new"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Partner
                 </Link>
@@ -331,13 +342,13 @@ export default function PartnersPage() {
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-400">
-                {partners.filter(p => p.type === 'game_studio').length}
+                {partners.filter(p => p.type === "game_studio").length}
               </p>
               <p className="text-sm text-gray-400">Game Studios</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-400">
-                {partners.filter(p => p.type === 'merch_supplier').length}
+                {partners.filter(p => p.type === "merch_supplier").length}
               </p>
               <p className="text-sm text-gray-400">Merch Suppliers</p>
             </div>
@@ -379,8 +390,18 @@ export default function PartnersPage() {
                 href="/dashboard/cr-super-admin/stats"
                 className="flex items-center p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors"
               >
-                <svg className="h-8 w-8 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <svg
+                  className="h-8 w-8 text-green-400 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
                 </svg>
                 <div>
                   <p className="font-medium text-white">System Stats</p>
@@ -392,5 +413,5 @@ export default function PartnersPage() {
         )}
       </div>
     </div>
-  );
-} 
+  )
+}

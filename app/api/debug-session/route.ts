@@ -1,22 +1,36 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getUserInfo } from '@/lib/okta';
+import { NextRequest, NextResponse } from "next/server"
+import { auth0 } from "@/lib/auth0"
+//import { getUserInfo } from '@/lib/okta';
 
 export async function GET(request: NextRequest) {
   try {
     // Get the access token from cookies
-    const accessToken = request.cookies.get('okta_access_token')?.value;
-    const idToken = request.cookies.get('okta_id_token')?.value;
-    const refreshToken = request.cookies.get('okta_refresh_token')?.value;
-    
+    const session = await auth0.getSession()
+    const accessToken = session?.tokenSet.accessToken
+    const idToken = session?.tokenSet.idToken
+    const refreshToken = session?.tokenSet.refreshToken
+
     if (!accessToken) {
-      return NextResponse.json({ 
-        error: 'No access token found',
-        message: 'You need to be logged in to see session data'
-      }, { status: 401 });
+      return NextResponse.json(
+        {
+          error: "No access token found",
+          message: "You need to be logged in to see session data",
+        },
+        { status: 401 }
+      )
     }
 
     // Get user info from Okta
-    const userInfo = await getUserInfo(accessToken);
+    //const userInfo = await getUserInfo(accessToken);
+    const userInfo = {
+      email: session.user.email,
+      name: session.user.name,
+      picture: session.user.picture,
+      sub: session.user.sub,
+      updated_at: session.user.updated_at,
+      created_at: session.user.created_at,
+      email_verified: session.user.email_verified,
+    }
 
     // Return the session data
     return NextResponse.json({
@@ -31,13 +45,16 @@ export async function GET(request: NextRequest) {
         accessToken: accessToken,
         idToken: idToken,
         refreshToken: refreshToken,
-      }
-    });
+      },
+    })
   } catch (error) {
-    console.error('Error getting session:', error);
-    return NextResponse.json({ 
-      error: 'Failed to get session',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    console.error("Error getting session:", error)
+    return NextResponse.json(
+      {
+        error: "Failed to get session",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    )
   }
-} 
+}

@@ -1,254 +1,272 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Edit, Trash2, Users, Gamepad2, ShoppingBag, Eye } from 'lucide-react';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Edit, Trash2, Users, Gamepad2, ShoppingBag, Eye } from "lucide-react"
 
 interface Partner {
-  id: string;
-  name: string;
-  type: 'game_studio' | 'merch_supplier';
-  logo_url?: string;
-  organization_id?: string;
-  created_at: string;
-  userCanView?: boolean;
-  userCanAdmin?: boolean;
-  userCanManageMembers?: boolean;
+  id: string
+  name: string
+  type: "game_studio" | "merch_supplier"
+  logo_url?: string
+  organization_id?: string
+  created_at: string
+  userCanView?: boolean
+  userCanAdmin?: boolean
+  userCanManageMembers?: boolean
 }
 
 interface Game {
-  id: string;
-  name: string;
-  type?: string;
-  picture_url?: string;
-  created_at: string;
-  client_ids_count: number;
+  id: string
+  name: string
+  type?: string
+  picture_url?: string
+  created_at: string
+  client_ids_count: number
 }
 
 interface SKU {
-  id: string;
-  name: string;
-  category?: string;
-  image_url?: string;
-  status: 'active' | 'inactive';
-  created_at: string;
+  id: string
+  name: string
+  category?: string
+  image_url?: string
+  status: "active" | "inactive"
+  created_at: string
 }
 
 interface User {
-  id: string;
-  email: string;
-  display_name?: string;
-  role: string;
-  created_at: string;
-  auth0_user_id?: string;
+  id: string
+  email: string
+  display_name?: string
+  role: string
+  created_at: string
+  auth0_user_id?: string
 }
 
 export default function PartnerDetailPage() {
-  const { user, isLoading } = useOktaAuth();
-  const params = useParams();
-  const router = useRouter();
-  const partnerId = params.id as string;
-  
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [games, setGames] = useState<Game[]>([]);
-  const [skus, setSkus] = useState<SKU[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { user, isLoading } = useOktaAuth()
+  const params = useParams()
+  const router = useRouter()
+  const partnerId = params.id as string
+
+  const [partner, setPartner] = useState<Partner | null>(null)
+  const [games, setGames] = useState<Game[]>([])
+  const [skus, setSkus] = useState<SKU[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!isLoading && user && partnerId) {
-      fetchPartnerData();
+      fetchPartnerData()
     }
-  }, [user, isLoading, partnerId]);
+  }, [user, isLoading, partnerId])
 
   const fetchPartnerData = async () => {
     try {
-      setLoading(true);
-      
+      setLoading(true)
+
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       // Fetch partner details with Authorization header
       const partnerResponse = await fetch(`/api/partners/${partnerId}`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       if (partnerResponse.ok) {
-        const partnerData = await partnerResponse.json();
-        setPartner(partnerData);
-        
+        const partnerData = await partnerResponse.json()
+        setPartner(partnerData)
+
         // Fetch related data based on partner type
-        if (partnerData.type === 'game_studio') {
-          await fetchGamesData(accessToken);
-        } else if (partnerData.type === 'merch_supplier') {
-          await fetchSKUsData(accessToken);
+        if (partnerData.type === "game_studio") {
+          await fetchGamesData(accessToken)
+        } else if (partnerData.type === "merch_supplier") {
+          await fetchSKUsData(accessToken)
         }
-        
+
         // Always fetch team members
-        await fetchUsersData(accessToken);
+        await fetchUsersData(accessToken)
       } else {
-        setError('Partner not found');
+        setError("Partner not found")
       }
     } catch (error) {
-      console.error('Error fetching partner data:', error);
-      setError('Failed to load partner data');
+      console.error("Error fetching partner data:", error)
+      setError("Failed to load partner data")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const fetchGamesData = async (accessToken?: string) => {
     try {
       // Get access token if not provided
-      let token = accessToken;
+      let token = accessToken
       if (!token) {
-        const tokenResponse = await fetch('/api/auth/token');
+        const tokenResponse = await fetch("/api/auth/token")
         if (!tokenResponse.ok) {
-          throw new Error('Failed to get access token');
+          throw new Error("Failed to get access token")
         }
-        const { accessToken: tokenData } = await tokenResponse.json();
-        token = tokenData;
+        const { accessToken: tokenData } = await tokenResponse.json()
+        token = tokenData
       }
-      
+
       const gamesResponse = await fetch(`/api/partners/${partnerId}/games`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+          Authorization: `Bearer ${token}`,
+        },
+      })
       if (gamesResponse.ok) {
-        const gamesData = await gamesResponse.json();
-        setGames(gamesData);
+        const gamesData = await gamesResponse.json()
+        setGames(gamesData)
       }
     } catch (error) {
-      console.error('Error fetching games:', error);
+      console.error("Error fetching games:", error)
     }
-  };
+  }
 
   const fetchSKUsData = async (accessToken?: string) => {
     try {
       // Get access token if not provided
-      let token = accessToken;
+      let token = accessToken
       if (!token) {
-        const tokenResponse = await fetch('/api/auth/token');
+        const tokenResponse = await fetch("/api/auth/token")
         if (!tokenResponse.ok) {
-          throw new Error('Failed to get access token');
+          throw new Error("Failed to get access token")
         }
-        const { accessToken: tokenData } = await tokenResponse.json();
-        token = tokenData;
+        const { accessToken: tokenData } = await tokenResponse.json()
+        token = tokenData
       }
-      
+
       const skusResponse = await fetch(`/api/partners/${partnerId}/skus`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+          Authorization: `Bearer ${token}`,
+        },
+      })
       if (skusResponse.ok) {
-        const skusData = await skusResponse.json();
-        setSkus(skusData);
+        const skusData = await skusResponse.json()
+        setSkus(skusData)
       }
     } catch (error) {
-      console.error('Error fetching SKUs:', error);
+      console.error("Error fetching SKUs:", error)
     }
-  };
+  }
 
   const fetchUsersData = async (accessToken?: string) => {
     try {
       // Get access token if not provided
-      let token = accessToken;
+      let token = accessToken
       if (!token) {
-        const tokenResponse = await fetch('/api/auth/token');
+        const tokenResponse = await fetch("/api/auth/token")
         if (!tokenResponse.ok) {
-          throw new Error('Failed to get access token');
+          throw new Error("Failed to get access token")
         }
-        const { accessToken: tokenData } = await tokenResponse.json();
-        token = tokenData;
+        const { accessToken: tokenData } = await tokenResponse.json()
+        token = tokenData
       }
-      
+
       const usersResponse = await fetch(`/api/partners/${partnerId}/users`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+          Authorization: `Bearer ${token}`,
+        },
+      })
       if (usersResponse.ok) {
-        const usersData = await usersResponse.json();
-        setUsers(usersData.teamMembers || usersData); // Handle both new and old format
+        const usersData = await usersResponse.json()
+        setUsers(usersData.teamMembers || usersData) // Handle both new and old format
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error)
     }
-  };
+  }
 
   const handleDeletePartner = async () => {
-    if (!confirm(`Are you sure you want to delete ${partner?.name}? This action cannot be undone.`)) {
-      return;
+    if (
+      !confirm(`Are you sure you want to delete ${partner?.name}? This action cannot be undone.`)
+    ) {
+      return
     }
 
     try {
       // Get the access token
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/partners/${partnerId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
 
       if (response.ok) {
-        router.push('/dashboard/partners');
+        router.push("/dashboard/partners")
       } else {
-        setError('Failed to delete partner');
+        setError("Failed to delete partner")
       }
     } catch (error) {
-      console.error('Error deleting partner:', error);
-      setError('Failed to delete partner');
+      console.error("Error deleting partner:", error)
+      setError("Failed to delete partner")
     }
-  };
+  }
 
   const getPartnerTypeLabel = (type: string) => {
-    return type === 'game_studio' ? 'Game Studio' : 'Merchandise Supplier';
-  };
+    return type === "game_studio" ? "Game Studio" : "Merchandise Supplier"
+  }
 
   const getPartnerTypeIcon = (type: string) => {
-    return type === 'game_studio' ? '🎮' : '🛍️';
-  };
+    return type === "game_studio" ? "🎮" : "🛍️"
+  }
 
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case 'can_admin':
-      case 'partner_admin':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900 text-red-300">Can Admin</span>;
-      case 'can_manage_members':
-      case 'partner_manager':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-blue-300">Can Manage Members</span>;
-      case 'can_view':
-      case 'partner_viewer':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300">Can View</span>;
+      case "can_admin":
+      case "partner_admin":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900 text-red-300">
+            Can Admin
+          </span>
+        )
+      case "can_manage_members":
+      case "partner_manager":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-blue-300">
+            Can Manage Members
+          </span>
+        )
+      case "can_view":
+      case "partner_viewer":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300">
+            Can View
+          </span>
+        )
       default:
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300">{role}</span>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300">
+            {role}
+          </span>
+        )
     }
-  };
+  }
 
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -259,7 +277,7 @@ export default function PartnerDetailPage() {
           <p className="text-gray-400">Please sign in to access the partner portal.</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (error || !partner) {
@@ -267,13 +285,15 @@ export default function PartnerDetailPage() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Partner Not Found</h1>
-          <p className="text-gray-400 mb-6">{error || 'The requested partner could not be found.'}</p>
+          <p className="text-gray-400 mb-6">
+            {error || "The requested partner could not be found."}
+          </p>
           <Link href="/dashboard/partners" className="btn-primary">
             Back to Partners
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -288,13 +308,13 @@ export default function PartnerDetailPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Partners
           </Link>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0">
                 {partner.logo_url ? (
-                  <img 
-                    src={partner.logo_url} 
+                  <img
+                    src={partner.logo_url}
                     alt={`${partner.name} logo`}
                     className="h-20 w-20 rounded-lg object-cover"
                   />
@@ -315,12 +335,13 @@ export default function PartnerDetailPage() {
                 </p>
                 {partner.organization_id && (
                   <p className="text-sm text-gray-400 mt-1">
-                    Group ID: <span className="font-mono text-gray-300">{partner.organization_id}</span>
+                    Group ID:{" "}
+                    <span className="font-mono text-gray-300">{partner.organization_id}</span>
                   </p>
                 )}
               </div>
             </div>
-            
+
             {partner.userCanAdmin && (
               <div className="flex items-center space-x-3">
                 <Link
@@ -349,16 +370,16 @@ export default function PartnerDetailPage() {
               <div className="flex-shrink-0">
                 <div className="h-8 w-8 bg-blue-900 rounded-lg flex items-center justify-center">
                   <span className="text-blue-400 text-lg">
-                    {partner.type === 'game_studio' ? '🎮' : '🛍️'}
+                    {partner.type === "game_studio" ? "🎮" : "🛍️"}
                   </span>
                 </div>
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-400">
-                  {partner.type === 'game_studio' ? 'Games' : 'Products'}
+                  {partner.type === "game_studio" ? "Games" : "Products"}
                 </p>
                 <p className="text-2xl font-bold text-white">
-                  {partner.type === 'game_studio' ? games.length : skus.length}
+                  {partner.type === "game_studio" ? games.length : skus.length}
                 </p>
               </div>
             </div>
@@ -374,10 +395,9 @@ export default function PartnerDetailPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-400">Active</p>
                 <p className="text-2xl font-bold text-white">
-                  {partner.type === 'game_studio' 
+                  {partner.type === "game_studio"
                     ? games.filter(g => g.client_ids_count > 0).length
-                    : skus.filter(s => s.status === 'active').length
-                  }
+                    : skus.filter(s => s.status === "active").length}
                 </p>
               </div>
             </div>
@@ -399,7 +419,7 @@ export default function PartnerDetailPage() {
         </div>
 
         {/* Content based on partner type */}
-        {partner.type === 'game_studio' ? (
+        {partner.type === "game_studio" ? (
           <div className="space-y-8">
             {/* Games Section */}
             <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
@@ -415,10 +435,10 @@ export default function PartnerDetailPage() {
                   </Link>
                 )}
               </div>
-              
+
               {games.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {games.map((game) => (
+                  {games.map(game => (
                     <Link
                       key={game.id}
                       href={`/dashboard/partners/${partnerId}/games/${game.id}`}
@@ -427,8 +447,8 @@ export default function PartnerDetailPage() {
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
                           {game.picture_url ? (
-                            <img 
-                              src={game.picture_url} 
+                            <img
+                              src={game.picture_url}
                               alt={game.name}
                               className="h-12 w-12 rounded-lg object-cover"
                             />
@@ -472,10 +492,10 @@ export default function PartnerDetailPage() {
                   </Link>
                 )}
               </div>
-              
+
               {skus.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {skus.map((sku) => (
+                  {skus.map(sku => (
                     <Link
                       key={sku.id}
                       href={`/dashboard/partners/${partnerId}/skus/${sku.id}`}
@@ -484,8 +504,8 @@ export default function PartnerDetailPage() {
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
                           {sku.image_url ? (
-                            <img 
-                              src={sku.image_url} 
+                            <img
+                              src={sku.image_url}
                               alt={sku.name}
                               className="h-12 w-12 rounded-lg object-cover"
                             />
@@ -498,7 +518,7 @@ export default function PartnerDetailPage() {
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium text-white truncate">{sku.name}</h3>
                           <p className="text-sm text-gray-400">
-                            {sku.category || 'No category'} • {sku.status}
+                            {sku.category || "No category"} • {sku.status}
                           </p>
                         </div>
                       </div>
@@ -518,28 +538,28 @@ export default function PartnerDetailPage() {
         {/* Team Members Section */}
         {partner.userCanView && (
           <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 mt-8">
-                      <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">Team Members</h2>
-            {partner.userCanManageMembers && (
-              <Link
-                href={`/dashboard/partners/${partnerId}/users`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Manage Team
-              </Link>
-            )}
-            {!partner.userCanManageMembers && partner.userCanView && (
-              <Link
-                href={`/dashboard/partners/${partnerId}/users`}
-                className="inline-flex items-center px-4 py-2 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View Team
-              </Link>
-            )}
-          </div>
-            
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-white">Team Members</h2>
+              {partner.userCanManageMembers && (
+                <Link
+                  href={`/dashboard/partners/${partnerId}/users`}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Manage Team
+                </Link>
+              )}
+              {!partner.userCanManageMembers && partner.userCanView && (
+                <Link
+                  href={`/dashboard/partners/${partnerId}/users`}
+                  className="inline-flex items-center px-4 py-2 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Team
+                </Link>
+              )}
+            </div>
+
             {users.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-700">
@@ -557,7 +577,7 @@ export default function PartnerDetailPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-gray-800 divide-y divide-gray-700">
-                    {users.map((user) => (
+                    {users.map(user => (
                       <tr key={user.id} className="hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
@@ -567,9 +587,7 @@ export default function PartnerDetailPage() {
                             <div className="text-sm text-gray-400">{user.email}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getRoleBadge(user.role)}
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(user.role)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                           {new Date(user.created_at).toLocaleDateString()}
                         </td>
@@ -597,5 +615,5 @@ export default function PartnerDetailPage() {
         )}
       </div>
     </div>
-  );
-} 
+  )
+}

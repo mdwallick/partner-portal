@@ -1,186 +1,188 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Key, Upload, Eye, EyeOff, Copy, Check } from 'lucide-react';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Key, Upload, Eye, EyeOff, Copy, Check } from "lucide-react"
 
 interface Partner {
-  id: string;
-  name: string;
-  type: 'game_studio' | 'merch_supplier';
-  logo_url?: string;
+  id: string
+  name: string
+  type: "game_studio" | "merch_supplier"
+  logo_url?: string
 }
 
 interface Game {
-  id: string;
-  name: string;
-  type?: string;
-  picture_url?: string;
-  created_at: string;
-  status: string;
+  id: string
+  name: string
+  type?: string
+  picture_url?: string
+  created_at: string
+  status: string
 }
 
 export default function NewClientIdPage() {
-  const { user, isLoading } = useOktaAuth();
-  const params = useParams();
-  const router = useRouter();
-  const partnerId = params.id as string;
-  const gameId = params.gameId as string;
-  
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [game, setGame] = useState<Game | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [showPreview, setShowPreview] = useState(true);
-  const [imageError, setImageError] = useState(false);
-  const [showSecretModal, setShowSecretModal] = useState(false);
-  const [clientSecret, setClientSecret] = useState('');
-  const [copiedSecret, setCopiedSecret] = useState(false);
-  
+  const { user, isLoading } = useOktaAuth()
+  const params = useParams()
+  const router = useRouter()
+  const partnerId = params.id as string
+  const gameId = params.gameId as string
+
+  const [partner, setPartner] = useState<Partner | null>(null)
+  const [game, setGame] = useState<Game | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+  const [showPreview, setShowPreview] = useState(true)
+  const [imageError, setImageError] = useState(false)
+  const [showSecretModal, setShowSecretModal] = useState(false)
+  const [clientSecret, setClientSecret] = useState("")
+  const [copiedSecret, setCopiedSecret] = useState(false)
+
   const [formData, setFormData] = useState({
-    client_name: '',
-    client_type: '',
-    logo_url: '',
-    status: 'active'
-  });
+    client_name: "",
+    client_type: "",
+    logo_url: "",
+    status: "active",
+  })
 
   useEffect(() => {
     if (!isLoading && user && partnerId && gameId) {
-      fetchGameData();
+      fetchGameData()
     }
-  }, [user, isLoading, partnerId, gameId]);
+  }, [user, isLoading, partnerId, gameId])
 
   const fetchGameData = async () => {
     try {
-      setLoading(true);
-      
+      setLoading(true)
+
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       // Fetch data using the optimized API route
       const response = await fetch(`/api/partners/${partnerId}/games/${gameId}/client-ids/new`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-      
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+
       if (response.ok) {
-        const data = await response.json();
-        setPartner(data.partner);
-        setGame(data.game);
+        const data = await response.json()
+        setPartner(data.partner)
+        setGame(data.game)
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to load data');
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to load data")
       }
     } catch (error) {
-      console.error('Error fetching game data:', error);
-      setError('Failed to load game data');
+      console.error("Error fetching game data:", error)
+      setError("Failed to load game data")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
-    }));
-    
+      [name]: value,
+    }))
+
     // Reset image error when URL changes and show preview
-    if (name === 'logo_url') {
-      setImageError(false);
+    if (name === "logo_url") {
+      setImageError(false)
       // Show preview automatically when a URL is provided
       if (value.trim()) {
-        setShowPreview(true);
+        setShowPreview(true)
       }
     }
-  };
+  }
 
   const handleImageLoad = () => {
-    setImageError(false);
-  };
+    setImageError(false)
+  }
 
   const handleImageError = () => {
-    setImageError(true);
-  };
+    setImageError(true)
+  }
 
   const copyClientSecret = async () => {
     try {
-      await navigator.clipboard.writeText(clientSecret);
-      setCopiedSecret(true);
-      setTimeout(() => setCopiedSecret(false), 2000);
+      await navigator.clipboard.writeText(clientSecret)
+      setCopiedSecret(true)
+      setTimeout(() => setCopiedSecret(false), 2000)
     } catch (error) {
-      console.error('Failed to copy client secret:', error);
+      console.error("Failed to copy client secret:", error)
     }
-  };
+  }
 
   const closeSecretModal = () => {
-    setShowSecretModal(false);
-    setClientSecret('');
-    setCopiedSecret(false);
-    router.push(`/dashboard/partners/${partnerId}/games/${gameId}`);
-  };
+    setShowSecretModal(false)
+    setClientSecret("")
+    setCopiedSecret(false)
+    router.push(`/dashboard/partners/${partnerId}/games/${gameId}`)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     if (!formData.client_name.trim()) {
-      setError('Client ID name is required');
-      return;
+      setError("Client ID name is required")
+      return
     }
 
     try {
-      setSubmitting(true);
-      setError('');
+      setSubmitting(true)
+      setError("")
 
       // Get the access token
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
+
+      const { accessToken } = await tokenResponse.json()
 
       const response = await fetch(`/api/partners/${partnerId}/games/${gameId}/client-ids`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (response.ok) {
-        const newClientId = await response.json();
-        setClientSecret(newClientId.clientSecret);
-        setShowSecretModal(true);
+        const newClientId = await response.json()
+        setClientSecret(newClientId.clientSecret)
+        setShowSecretModal(true)
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to create client ID');
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to create client ID")
       }
     } catch (error) {
-      console.error('Error creating client ID:', error);
-      setError('Failed to create client ID');
+      console.error("Error creating client ID:", error)
+      setError("Failed to create client ID")
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -191,7 +193,7 @@ export default function NewClientIdPage() {
           <p className="text-gray-400">Please sign in to access the partner portal.</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (error || !partner || !game) {
@@ -199,13 +201,16 @@ export default function NewClientIdPage() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Error</h1>
-          <p className="text-gray-400 mb-6">{error || 'The requested game could not be found.'}</p>
-          <Link href={`/dashboard/partners/${partnerId}`} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700">
+          <p className="text-gray-400 mb-6">{error || "The requested game could not be found."}</p>
+          <Link
+            href={`/dashboard/partners/${partnerId}`}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700"
+          >
             Back to Partner
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -220,7 +225,7 @@ export default function NewClientIdPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to {game.name}
           </Link>
-          
+
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               <div className="h-12 w-12 bg-purple-900 rounded-lg flex items-center justify-center">
@@ -325,9 +330,7 @@ export default function NewClientIdPage() {
             {formData.logo_url && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-300">
-                    Logo Preview
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300">Logo Preview</label>
                   <button
                     type="button"
                     onClick={() => setShowPreview(!showPreview)}
@@ -346,7 +349,7 @@ export default function NewClientIdPage() {
                     )}
                   </button>
                 </div>
-                
+
                 {showPreview && (
                   <div className="border border-gray-700 rounded-lg p-4 bg-gray-700">
                     {imageError ? (
@@ -411,13 +414,18 @@ export default function NewClientIdPage() {
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-900 mb-4">
                 <Key className="h-6 w-6 text-green-300" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Client ID Created Successfully!</h3>
+              <h3 className="text-lg font-medium text-white mb-2">
+                Client ID Created Successfully!
+              </h3>
               <p className="text-sm text-gray-400 mb-6">
-                Your Okta OIDC Native application has been created. Please copy and save the client secret below.
+                Your Okta OIDC Native application has been created. Please copy and save the client
+                secret below.
               </p>
-              
+
               <div className="bg-gray-700 rounded-lg p-4 mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Client Secret</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Client Secret
+                </label>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -443,14 +451,14 @@ export default function NewClientIdPage() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="bg-yellow-900 border border-yellow-700 rounded-lg p-4 mb-6">
                 <p className="text-sm text-yellow-300">
-                  ⚠️ <strong>Important:</strong> This client secret will only be shown once. 
-                  Make sure to copy and save it securely.
+                  ⚠️ <strong>Important:</strong> This client secret will only be shown once. Make
+                  sure to copy and save it securely.
                 </p>
               </div>
-              
+
               <button
                 onClick={closeSecretModal}
                 className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
@@ -462,5 +470,5 @@ export default function NewClientIdPage() {
         </div>
       )}
     </div>
-  );
-} 
+  )
+}

@@ -1,153 +1,153 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Save, Gamepad2 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Save, Gamepad2 } from "lucide-react"
+import toast from "react-hot-toast"
 
 interface Game {
-  id: string;
-  name: string;
-  type?: string;
-  picture_url?: string;
-  created_at: string;
-  client_ids_count: number;
+  id: string
+  name: string
+  type?: string
+  picture_url?: string
+  created_at: string
+  client_ids_count: number
 }
 
 interface Partner {
-  id: string;
-  name: string;
-  type: 'game_studio' | 'merch_supplier';
+  id: string
+  name: string
+  type: "game_studio" | "merch_supplier"
 }
 
 export default function EditGamePage() {
-  const { user, isLoading } = useOktaAuth();
-  const params = useParams();
-  const router = useRouter();
-  const partnerId = params.id as string;
-  const gameId = params.gameId as string;
-  
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [game, setGame] = useState<Game | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    type: '',
-    picture_url: ''
-  });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const { user, isLoading } = useOktaAuth()
+  const params = useParams()
+  const router = useRouter()
+  const partnerId = params.id as string
+  const gameId = params.gameId as string
 
-  const [canView, setCanView] = useState(false);
-  const [canAdmin, setCanAdmin] = useState(false);
+  const [partner, setPartner] = useState<Partner | null>(null)
+  const [game, setGame] = useState<Game | null>(null)
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "",
+    picture_url: "",
+  })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+
+  const [canView, setCanView] = useState(false)
+  const [canAdmin, setCanAdmin] = useState(false)
 
   useEffect(() => {
     if (!isLoading && user && partnerId && gameId) {
-      fetchData();
+      fetchData()
     }
-  }, [user, isLoading, partnerId, gameId]);
+  }, [user, isLoading, partnerId, gameId])
 
   const fetchData = async () => {
     try {
-      setLoading(true);
-      
+      setLoading(true)
+
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       // Fetch game details (includes partner info)
       const gameResponse = await fetch(`/api/partners/${partnerId}/games/${gameId}`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       if (gameResponse.ok) {
-        const gameData = await gameResponse.json();
-        setGame(gameData);
+        const gameData = await gameResponse.json()
+        setGame(gameData)
         setFormData({
           name: gameData.name,
-          type: gameData.type || '',
-          picture_url: gameData.picture_url || ''
-        });
-        
+          type: gameData.type || "",
+          picture_url: gameData.picture_url || "",
+        })
+
         // Set partner info from game response
         setPartner({
           id: gameData.partner_id,
           name: gameData.partner_name,
-          type: gameData.partner_type
-        });
-        
+          type: gameData.partner_type,
+        })
+
         // Set permissions based on game data response
-        setCanView(true); // If we got the game data, user can view
-        setCanAdmin(gameData.userCanAdmin || false); // Set admin permission from response
+        setCanView(true) // If we got the game data, user can view
+        setCanAdmin(gameData.userCanAdmin || false) // Set admin permission from response
       } else {
-        setError('Game not found');
+        setError("Game not found")
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Failed to load data');
+      console.error("Error fetching data:", error)
+      setError("Failed to load data")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setError('');
+    e.preventDefault()
+    setSaving(true)
+    setError("")
 
     try {
       // Get the access token
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/partners/${partnerId}/games/${gameId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (response.ok) {
-        toast.success('Game updated successfully!');
-        router.push(`/dashboard/partners/${partnerId}/games/${gameId}`);
+        toast.success("Game updated successfully!")
+        router.push(`/dashboard/partners/${partnerId}/games/${gameId}`)
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to update game');
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to update game")
       }
     } catch (error) {
-      setError('An error occurred while updating the game');
+      setError("An error occurred while updating the game")
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
-    }));
-  };
+      [name]: value,
+    }))
+  }
 
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -158,7 +158,7 @@ export default function EditGamePage() {
           <p className="text-gray-400">Please sign in to access the partner portal.</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (error || !game) {
@@ -166,13 +166,16 @@ export default function EditGamePage() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Game Not Found</h1>
-          <p className="text-gray-400 mb-6">{error || 'The requested game could not be found.'}</p>
-          <Link href={`/dashboard/partners/${partnerId}/games`} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+          <p className="text-gray-400 mb-6">{error || "The requested game could not be found."}</p>
+          <Link
+            href={`/dashboard/partners/${partnerId}/games`}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+          >
             Back to Games
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   // If user can't view, show access denied
@@ -182,12 +185,15 @@ export default function EditGamePage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-gray-400 mb-6">You don't have permission to view this game.</p>
-          <Link href={`/dashboard/partners/${partnerId}/games`} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+          <Link
+            href={`/dashboard/partners/${partnerId}/games`}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+          >
             Back to Games
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -211,8 +217,8 @@ export default function EditGamePage() {
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               {game.picture_url ? (
-                <img 
-                  src={game.picture_url} 
+                <img
+                  src={game.picture_url}
                   alt={`${game.name} image`}
                   className="h-16 w-16 rounded-lg object-cover"
                 />
@@ -226,13 +232,13 @@ export default function EditGamePage() {
               <h2 className="text-xl font-semibold text-white">{game.name}</h2>
               <div className="flex items-center space-x-2 mt-1">
                 <span className="text-lg">🎮</span>
-                <span className="text-gray-400">{game.type || 'Game'}</span>
+                <span className="text-gray-400">{game.type || "Game"}</span>
               </div>
               <p className="text-sm text-gray-500 mt-1">
                 Created {new Date(game.created_at).toLocaleDateString()}
               </p>
               <p className="text-sm text-gray-500">
-                {game.client_ids_count} client ID{game.client_ids_count !== 1 ? 's' : ''}
+                {game.client_ids_count} client ID{game.client_ids_count !== 1 ? "s" : ""}
               </p>
             </div>
           </div>
@@ -247,7 +253,7 @@ export default function EditGamePage() {
               </p>
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-900 border border-red-700 rounded-md p-4">
@@ -288,9 +294,7 @@ export default function EditGamePage() {
                 className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-white placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="e.g., Action, RPG, Strategy"
               />
-              <p className="mt-1 text-sm text-gray-400">
-                Optional: Type or genre of the game
-              </p>
+              <p className="mt-1 text-sm text-gray-400">Optional: Type or genre of the game</p>
             </div>
 
             {/* Picture URL */}
@@ -308,9 +312,7 @@ export default function EditGamePage() {
                 className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-white placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="https://example.com/game-image.jpg"
               />
-              <p className="mt-1 text-sm text-gray-400">
-                Optional: URL to the game's image
-              </p>
+              <p className="mt-1 text-sm text-gray-400">Optional: URL to the game's image</p>
             </div>
 
             {/* Preview */}
@@ -320,24 +322,26 @@ export default function EditGamePage() {
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0 relative">
                     {formData.picture_url ? (
-                      <img 
-                        src={formData.picture_url} 
+                      <img
+                        src={formData.picture_url}
                         alt="Game preview"
                         className="h-16 w-16 rounded-lg object-cover"
-                        onError={(e) => {
+                        onError={e => {
                           // Hide the broken image and show fallback
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          e.currentTarget.style.display = "none"
+                          e.currentTarget.nextElementSibling?.classList.remove("hidden")
                         }}
                       />
                     ) : null}
-                    <div className={`h-16 w-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white text-2xl font-bold ${formData.picture_url ? 'hidden' : ''}`}>
+                    <div
+                      className={`h-16 w-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white text-2xl font-bold ${formData.picture_url ? "hidden" : ""}`}
+                    >
                       🎮
                     </div>
                   </div>
                   <div>
                     <h4 className="text-lg font-semibold text-white">{formData.name}</h4>
-                    <p className="text-sm text-gray-400">{formData.type || 'Game'}</p>
+                    <p className="text-sm text-gray-400">{formData.type || "Game"}</p>
                   </div>
                 </div>
               </div>
@@ -370,5 +374,5 @@ export default function EditGamePage() {
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

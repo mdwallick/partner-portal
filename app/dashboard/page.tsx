@@ -1,71 +1,83 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useEffect, useState } from 'react';
-import { DollarSign, Clock, Users, Tv, ChevronDown, Download } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useEffect, useState } from "react"
+import { DollarSign, Clock, Users, Tv, ChevronDown, Download } from "lucide-react"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+} from "recharts"
 
 // Fake data for charts
 const royaltiesByLicensor = [
-  { name: 'Toei Animation', royalties: 3800 },
-  { name: 'Studio Pierrot', royalties: 2800 },
-  { name: 'Ufotable', royalties: 2200 },
-  { name: 'Bones', royalties: 1500 },
-  { name: 'MAPPA', royalties: 800 },
-];
+  { name: "Toei Animation", royalties: 3800 },
+  { name: "Studio Pierrot", royalties: 2800 },
+  { name: "Ufotable", royalties: 2200 },
+  { name: "Bones", royalties: 1500 },
+  { name: "MAPPA", royalties: 800 },
+]
 
 const revenueData = [
-  { month: 'Jan', revenue: 2000, watchHours: 9000 },
-  { month: 'Feb', revenue: 1000, watchHours: 11000 },
-  { month: 'Mar', revenue: 9000, watchHours: 19000 },
-  { month: 'Apr', revenue: 4000, watchHours: 14000 },
-  { month: 'May', revenue: 5000, watchHours: 22000 },
-  { month: 'Jun', revenue: 4500, watchHours: 19000 },
-];
+  { month: "Jan", revenue: 2000, watchHours: 9000 },
+  { month: "Feb", revenue: 1000, watchHours: 11000 },
+  { month: "Mar", revenue: 9000, watchHours: 19000 },
+  { month: "Apr", revenue: 4000, watchHours: 14000 },
+  { month: "May", revenue: 5000, watchHours: 22000 },
+  { month: "Jun", revenue: 4500, watchHours: 19000 },
+]
 
 const royaltiesByRegion = [
-  { region: 'North America', royalties: 8500, color: '#0D9488' }, // teal
-  { region: 'Europe', royalties: 7200, color: '#F97316' }, // orange
-  { region: 'Asia Pacific', royalties: 6800, color: '#1E40AF' }, // blue
-  { region: 'Japan', royalties: 5200, color: '#EAB308' }, // yellow
-  { region: 'Latin America', royalties: 3800, color: '#FB923C' }, // light orange
-  { region: 'Middle East & Africa', royalties: 2100, color: '#000000' }, // black
-];
+  { region: "North America", royalties: 8500, color: "#0D9488" }, // teal
+  { region: "Europe", royalties: 7200, color: "#F97316" }, // orange
+  { region: "Asia Pacific", royalties: 6800, color: "#1E40AF" }, // blue
+  { region: "Japan", royalties: 5200, color: "#EAB308" }, // yellow
+  { region: "Latin America", royalties: 3800, color: "#FB923C" }, // light orange
+  { region: "Middle East & Africa", royalties: 2100, color: "#000000" }, // black
+]
 
 const watchTimeByGenre = [
-  { genre: 'Action', hours: 355 },
-  { genre: 'Adventure', hours: 295 },
-  { genre: 'Shōnen', hours: 285 },
-  { genre: 'Fantasy', hours: 245 },
-  { genre: 'Comedy', hours: 185 },
-  { genre: 'Drama', hours: 165 },
-  { genre: 'Romance', hours: 135 },
-  { genre: 'Supernatural', hours: 120 },
-  { genre: 'Slice of Life', hours: 95 },
-  { genre: 'Isekai', hours: 85 },
-  { genre: 'Magic', hours: 75 },
-  { genre: 'Sci-Fi', hours: 65 },
-  { genre: 'Psychological', hours: 45 },
-  { genre: 'Mystery', hours: 35 },
-  { genre: 'Seinen', hours: 25 },
-];
+  { genre: "Action", hours: 355 },
+  { genre: "Adventure", hours: 295 },
+  { genre: "Shōnen", hours: 285 },
+  { genre: "Fantasy", hours: 245 },
+  { genre: "Comedy", hours: 185 },
+  { genre: "Drama", hours: 165 },
+  { genre: "Romance", hours: 135 },
+  { genre: "Supernatural", hours: 120 },
+  { genre: "Slice of Life", hours: 95 },
+  { genre: "Isekai", hours: 85 },
+  { genre: "Magic", hours: 75 },
+  { genre: "Sci-Fi", hours: 65 },
+  { genre: "Psychological", hours: 45 },
+  { genre: "Mystery", hours: 35 },
+  { genre: "Seinen", hours: 25 },
+]
 
 export default function DashboardPage() {
-  const { user } = useOktaAuth();
-  const [loading, setLoading] = useState(true);
+  const { user } = useOktaAuth()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Simulate loading
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    const timer = setTimeout(() => setLoading(false), 1000)
+    return () => clearTimeout(timer)
+  }, [])
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-900">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
       </div>
-    );
+    )
   }
 
   return (
@@ -152,11 +164,11 @@ export default function DashboardPage() {
                   <div className="bg-gray-700 rounded-full h-4 overflow-hidden">
                     <div
                       className="bg-orange-500 h-4 rounded-full animate-fill-bar"
-                      style={{ 
+                      style={{
                         width: `${(licensor.royalties / 4000) * 100}%`,
                         animationDelay: `${index * 200}ms`,
-                        transform: 'translateX(-100%)',
-                        animation: `fillBar 1s ease-out ${index * 200}ms forwards`
+                        transform: "translateX(-100%)",
+                        animation: `fillBar 1s ease-out ${index * 200}ms forwards`,
                       }}
                     ></div>
                   </div>
@@ -186,45 +198,38 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
-                  dataKey="month" 
+                <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
+                <YAxis
                   stroke="#9CA3AF"
                   fontSize={12}
+                  tickFormatter={value => value.toLocaleString()}
                 />
-                <YAxis 
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                  tickFormatter={(value) => value.toLocaleString()}
-                />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#F9FAFB'
+                    backgroundColor: "#1F2937",
+                    border: "1px solid #374151",
+                    borderRadius: "8px",
+                    color: "#F9FAFB",
                   }}
-                  labelStyle={{ color: '#9CA3AF' }}
+                  labelStyle={{ color: "#9CA3AF" }}
                 />
-                <Legend 
-                  wrapperStyle={{ color: '#F9FAFB' }}
-                  iconType="circle"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#F97316" 
+                <Legend wrapperStyle={{ color: "#F9FAFB" }} iconType="circle" />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#F97316"
                   strokeWidth={3}
-                  dot={{ fill: '#F97316', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#F97316', strokeWidth: 2 }}
+                  dot={{ fill: "#F97316", strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: "#F97316", strokeWidth: 2 }}
                   name="Revenue (USD)"
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="watchHours" 
-                  stroke="#FFFFFF" 
+                <Line
+                  type="monotone"
+                  dataKey="watchHours"
+                  stroke="#FFFFFF"
                   strokeWidth={3}
-                  dot={{ fill: '#FFFFFF', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#FFFFFF', strokeWidth: 2 }}
+                  dot={{ fill: "#FFFFFF", strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: "#FFFFFF", strokeWidth: 2 }}
                   name="Watch Hours"
                 />
               </LineChart>
@@ -239,12 +244,12 @@ export default function DashboardPage() {
           <h3 className="text-lg font-semibold text-white mb-4">Royalties by Region</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={royaltiesByRegion} 
+              <BarChart
+                data={royaltiesByRegion}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
+                <XAxis
                   dataKey="region"
                   stroke="#9CA3AF"
                   fontSize={12}
@@ -252,26 +257,22 @@ export default function DashboardPage() {
                   textAnchor="end"
                   height={80}
                 />
-                <YAxis 
+                <YAxis
                   stroke="#9CA3AF"
                   fontSize={12}
-                  tickFormatter={(value) => `$${(value / 1000).toFixed(1)}k`}
+                  tickFormatter={value => `$${(value / 1000).toFixed(1)}k`}
                 />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#F9FAFB'
+                    backgroundColor: "#1F2937",
+                    border: "1px solid #374151",
+                    borderRadius: "8px",
+                    color: "#F9FAFB",
                   }}
-                  labelStyle={{ color: '#9CA3AF' }}
-                  formatter={(value) => [`$${value.toLocaleString()}`, 'Royalties']}
+                  labelStyle={{ color: "#9CA3AF" }}
+                  formatter={value => [`$${value.toLocaleString()}`, "Royalties"]}
                 />
-                <Bar 
-                  dataKey="royalties" 
-                  fill="#F97316"
-                  radius={[4, 4, 0, 0]}
-                >
+                <Bar dataKey="royalties" fill="#F97316" radius={[4, 4, 0, 0]}>
                   {royaltiesByRegion.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -286,37 +287,30 @@ export default function DashboardPage() {
           <p className="text-sm text-gray-400 mb-4">Hours watched for your most-viewed genres</p>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={watchTimeByGenre} 
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
+              <BarChart data={watchTimeByGenre} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
+                <XAxis
                   dataKey="genre"
-                  stroke="#9CA3AF" 
+                  stroke="#9CA3AF"
                   fontSize={12}
                   angle={-45}
                   textAnchor="end"
                   height={80}
                 />
-                <YAxis 
-                  stroke="#9CA3AF" 
-                  fontSize={12}
-                  tickFormatter={(value) => `${value}h`}
-                />
-                <Tooltip 
+                <YAxis stroke="#9CA3AF" fontSize={12} tickFormatter={value => `${value}h`} />
+                <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#F9FAFB'
+                    backgroundColor: "#1F2937",
+                    border: "1px solid #374151",
+                    borderRadius: "8px",
+                    color: "#F9FAFB",
                   }}
-                  labelStyle={{ color: '#9CA3AF' }}
-                  formatter={(value) => [`${value} hours`, 'Watch Time']}
+                  labelStyle={{ color: "#9CA3AF" }}
+                  formatter={value => [`${value} hours`, "Watch Time"]}
                 />
-                <Bar 
-                  dataKey="hours" 
-                  fill="#F97316" 
+                <Bar
+                  dataKey="hours"
+                  fill="#F97316"
                   radius={[4, 4, 0, 0]}
                   animationDuration={1000}
                   animationBegin={0}
@@ -327,5 +321,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

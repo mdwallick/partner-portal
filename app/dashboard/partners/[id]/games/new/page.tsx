@@ -1,149 +1,151 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Gamepad2, Upload, Eye, EyeOff } from 'lucide-react';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Gamepad2, Upload, Eye, EyeOff } from "lucide-react"
 
 interface Partner {
-  id: string;
-  name: string;
-  type: 'game_studio' | 'merch_supplier';
-  logo_url?: string;
+  id: string
+  name: string
+  type: "game_studio" | "merch_supplier"
+  logo_url?: string
 }
 
 export default function NewGamePage() {
-  const { user, isLoading } = useOktaAuth();
-  const params = useParams();
-  const router = useRouter();
-  const partnerId = params.id as string;
-  
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [showPreview, setShowPreview] = useState(true);
-  const [imageError, setImageError] = useState(false);
-  
+  const { user, isLoading } = useOktaAuth()
+  const params = useParams()
+  const router = useRouter()
+  const partnerId = params.id as string
+
+  const [partner, setPartner] = useState<Partner | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+  const [showPreview, setShowPreview] = useState(true)
+  const [imageError, setImageError] = useState(false)
+
   const [formData, setFormData] = useState({
-    name: '',
-    type: '',
-    picture_url: ''
-  });
+    name: "",
+    type: "",
+    picture_url: "",
+  })
 
   useEffect(() => {
     if (!isLoading && user && partnerId) {
-      fetchPartnerData();
+      fetchPartnerData()
     }
-  }, [user, isLoading, partnerId]);
+  }, [user, isLoading, partnerId])
 
   const fetchPartnerData = async () => {
     try {
-      setLoading(true);
-      
+      setLoading(true)
+
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
+
+      const { accessToken } = await tokenResponse.json()
+
       const response = await fetch(`/api/partners/${partnerId}`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
       if (response.ok) {
-        const partnerData = await response.json();
-        setPartner(partnerData);
+        const partnerData = await response.json()
+        setPartner(partnerData)
       } else {
-        setError('Partner not found');
+        setError("Partner not found")
       }
     } catch (error) {
-      console.error('Error fetching partner data:', error);
-      setError('Failed to load partner data');
+      console.error("Error fetching partner data:", error)
+      setError("Failed to load partner data")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
-    }));
-    
+      [name]: value,
+    }))
+
     // Reset image error when URL changes and show preview
-    if (name === 'picture_url') {
-      setImageError(false);
+    if (name === "picture_url") {
+      setImageError(false)
       // Show preview automatically when a URL is provided
       if (value.trim()) {
-        setShowPreview(true);
+        setShowPreview(true)
       }
     }
-  };
+  }
 
   const handleImageLoad = () => {
-    setImageError(false);
-  };
+    setImageError(false)
+  }
 
   const handleImageError = () => {
-    setImageError(true);
-  };
+    setImageError(true)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     if (!formData.name.trim()) {
-      setError('Game name is required');
-      return;
+      setError("Game name is required")
+      return
     }
 
     try {
-      setSubmitting(true);
-      setError('');
+      setSubmitting(true)
+      setError("")
 
       // Get the access token
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
+
+      const { accessToken } = await tokenResponse.json()
 
       const response = await fetch(`/api/partners/${partnerId}/games`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (response.ok) {
-        const newGame = await response.json();
-        router.push(`/dashboard/partners/${partnerId}/games/${newGame.id}`);
+        const newGame = await response.json()
+        router.push(`/dashboard/partners/${partnerId}/games/${newGame.id}`)
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to create game');
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to create game")
       }
     } catch (error) {
-      console.error('Error creating game:', error);
-      setError('Failed to create game');
+      console.error("Error creating game:", error)
+      setError("Failed to create game")
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -154,7 +156,7 @@ export default function NewGamePage() {
           <p className="text-gray-400">Please sign in to access the partner portal.</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (error || !partner) {
@@ -162,13 +164,18 @@ export default function NewGamePage() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Error</h1>
-          <p className="text-gray-400 mb-6">{error || 'The requested partner could not be found.'}</p>
-          <Link href="/dashboard/partners" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700">
+          <p className="text-gray-400 mb-6">
+            {error || "The requested partner could not be found."}
+          </p>
+          <Link
+            href="/dashboard/partners"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700"
+          >
             Back to Partners
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -183,7 +190,7 @@ export default function NewGamePage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to {partner.name}
           </Link>
-          
+
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               <div className="h-12 w-12 bg-orange-900 rounded-lg flex items-center justify-center">
@@ -278,9 +285,7 @@ export default function NewGamePage() {
             {formData.picture_url && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-300">
-                    Image Preview
-                  </label>
+                  <label className="block text-sm font-medium text-gray-300">Image Preview</label>
                   <button
                     type="button"
                     onClick={() => setShowPreview(!showPreview)}
@@ -299,7 +304,7 @@ export default function NewGamePage() {
                     )}
                   </button>
                 </div>
-                
+
                 {showPreview && (
                   <div className="border border-gray-600 rounded-lg p-4 bg-gray-700">
                     {imageError ? (
@@ -356,5 +361,5 @@ export default function NewGamePage() {
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

@@ -13,16 +13,19 @@ You are solely responsible for evaluating its fitness for your intended use, and
 ## 🚀 Features
 
 ### Authentication & Authorization
+
 - **Okta Integration**: Secure authentication with SSO and social login support
 - **Auth0 FGA**: Fine-grained authorization with relationship-based access control
 - **Role-based Access**: Different permissions for partner admins, users, and CR admins
 
 ### Partner Management
+
 - **Game Studios**: Create and manage games, client IDs, and metadata
 - **Merch Suppliers**: Manage product catalog with SKUs and categories
 - **User Management**: Invite and manage team members within partner organizations
 
 ### Dashboard & Analytics
+
 - **Partner Dashboard**: Overview with stats and quick actions
 - **Game Management**: Full CRUD operations for games and client IDs
 - **Product Management**: Complete SKU lifecycle management
@@ -41,7 +44,7 @@ You are solely responsible for evaluating its fitness for your intended use, and
 
 ## 📋 Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Okta account
 - Auth0 FGA account
@@ -107,6 +110,7 @@ NEXT_PUBLIC_APP_DESCRIPTION='Streaming Platform Partner Portal'
 The application uses Neon PostgreSQL with the following schema:
 
 #### Tables
+
 - `partners` - Partner organizations (game studios & merch suppliers)
 - `users` - User metadata linked to Auth0
 - `games` - Games owned by game studio partners
@@ -115,6 +119,7 @@ The application uses Neon PostgreSQL with the following schema:
 - `audit_logs` - System audit trail
 
 #### Key Features
+
 - UUID primary keys for security
 - Foreign key relationships with CASCADE deletes
 - Automatic timestamps (created_at, updated_at)
@@ -135,7 +140,7 @@ brew install postgresql
 #### Okta Groups Setup (equivalent to Auth0 Organizations)
 
 1. **Create Groups**: In your Okta dashboard, go to "Directory" → "Groups"
-2. **Create Management API Token**: 
+2. **Create Management API Token**:
    - Go to "Security" → "API" → "Tokens"
    - Create a new API token with the following scopes:
      - `okta.groups.manage`
@@ -238,21 +243,25 @@ type platform
 ## 🎯 User Roles
 
 ### Partner Roles
+
 - **partner_admin**: Admin within a partner organization
 - **partner_user**: Member within a partner organization
 
 ### CR Roles
+
 - **cr_admin**: Internal admin assigned to manage specific partners
 - **cr_super_admin**: Internal admin with full system access
 
 ## 📊 API Endpoints
 
 ### Authentication
+
 - `GET /api/auth/login` - Okta login
 - `GET /api/auth/callback` - Okta callback
 - `GET /api/auth/logout` - Okta logout
 
 ### Partners
+
 - `GET /api/partners/me` - Get current partner info
 - `GET /api/partners` - List partners (CR admins only)
 - `POST /api/partners` - Create partner (CR admins only)
@@ -261,6 +270,7 @@ type platform
 - `DELETE /api/partners/users/:id` - Remove user
 
 ### Games
+
 - `GET /api/games` - List games for partner
 - `POST /api/games` - Create game
 - `PUT /api/games/:id` - Update game
@@ -268,6 +278,7 @@ type platform
 - `POST /api/games/:id/client-ids` - Add client ID
 
 ### SKUs
+
 - `GET /api/sku` - List SKUs for partner
 - `POST /api/sku` - Create SKU
 - `PUT /api/sku/:id` - Update SKU
@@ -312,6 +323,7 @@ npm run lint         # Run ESLint
 ### Other Platforms
 
 The application can be deployed to any platform that supports Next.js:
+
 - Netlify
 - Railway
 - DigitalOcean App Platform
@@ -332,10 +344,11 @@ This project is licensed under the MIT License.
 ## 🆘 Support
 
 For support and questions:
+
 - Check the documentation
 - Open an issue on GitHub
 - Contact the development team
 
 ---
 
-Built with ❤️ for our awesome Okta/Auth0 community. 
+Built with ❤️ for our awesome Okta/Auth0 community.

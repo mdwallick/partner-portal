@@ -1,73 +1,73 @@
-'use client';
+"use client"
 
-import { useOktaAuth } from '@/lib/use-okta-auth';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Save } from 'lucide-react';
+import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Save } from "lucide-react"
 
 export default function NewPartnerPage() {
-  const { user, isLoading } = useOktaAuth();
-  const router = useRouter();
+  const { user, isLoading } = useOktaAuth()
+  const router = useRouter()
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'game_studio' as 'game_studio' | 'merch_supplier',
-    logo_url: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+    name: "",
+    type: "game_studio" as "game_studio" | "merch_supplier",
+    logo_url: "",
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    setLoading(true)
+    setError("")
 
     try {
       // Get the access token from the API
-      const tokenResponse = await fetch('/api/auth/token');
+      const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
-        throw new Error('Failed to get access token');
+        throw new Error("Failed to get access token")
       }
-      
-      const { accessToken } = await tokenResponse.json();
-      
-      const response = await fetch('/api/partners', {
-        method: 'POST',
+
+      const { accessToken } = await tokenResponse.json()
+
+      const response = await fetch("/api/partners", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (response.ok) {
-        const newPartner = await response.json();
-        router.push(`/dashboard/partners/${newPartner.id}`);
+        const newPartner = await response.json()
+        router.push(`/dashboard/partners/${newPartner.id}`)
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to create partner');
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to create partner")
       }
     } catch (error) {
-      setError('An error occurred while creating the partner');
+      setError("An error occurred while creating the partner")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
-    }));
-  };
+      [name]: value,
+    }))
+  }
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-600"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -78,7 +78,7 @@ export default function NewPartnerPage() {
           <p className="text-gray-400">Please sign in to access the partner portal.</p>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -140,10 +140,9 @@ export default function NewPartnerPage() {
                 <option value="merch_supplier">Merchandise Supplier</option>
               </select>
               <p className="text-sm text-gray-400 mt-1">
-                {formData.type === 'game_studio' 
-                  ? 'Game studios can create and manage games with client IDs'
-                  : 'Merchandise suppliers can create and manage product SKUs'
-                }
+                {formData.type === "game_studio"
+                  ? "Game studios can create and manage games with client IDs"
+                  : "Merchandise suppliers can create and manage product SKUs"}
               </p>
             </div>
 
@@ -173,25 +172,27 @@ export default function NewPartnerPage() {
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0 relative">
                     {formData.logo_url ? (
-                      <img 
-                        src={formData.logo_url} 
+                      <img
+                        src={formData.logo_url}
                         alt="Logo preview"
                         className="h-16 w-16 rounded-lg object-cover"
-                        onError={(e) => {
+                        onError={e => {
                           // Hide the broken image and show fallback
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          e.currentTarget.style.display = "none"
+                          e.currentTarget.nextElementSibling?.classList.remove("hidden")
                         }}
                       />
                     ) : null}
-                    <div className={`h-16 w-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white text-2xl font-bold ${formData.logo_url ? 'hidden' : ''}`}>
+                    <div
+                      className={`h-16 w-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white text-2xl font-bold ${formData.logo_url ? "hidden" : ""}`}
+                    >
                       {formData.name.charAt(0).toUpperCase()}
                     </div>
                   </div>
                   <div>
                     <h4 className="text-lg font-semibold text-white">{formData.name}</h4>
                     <p className="text-sm text-gray-400 capitalize">
-                      {formData.type.replace('_', ' ')} Partner
+                      {formData.type.replace("_", " ")} Partner
                     </p>
                   </div>
                 </div>
@@ -223,5 +224,5 @@ export default function NewPartnerPage() {
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

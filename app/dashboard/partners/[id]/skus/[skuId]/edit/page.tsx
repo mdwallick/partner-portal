@@ -1,142 +1,144 @@
-'use client';
+"use client"
 
-import { useUser } from '@auth0/nextjs-auth0/client';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, ShoppingBag, Upload } from 'lucide-react';
+import { useUser } from "@auth0/nextjs-auth0/client"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, ShoppingBag, Upload } from "lucide-react"
 
 interface Partner {
-  id: string;
-  name: string;
-  type: 'game_studio' | 'merch_supplier';
-  logo_url?: string;
+  id: string
+  name: string
+  type: "game_studio" | "merch_supplier"
+  logo_url?: string
 }
 
 interface SKU {
-  id: string;
-  name: string;
-  category?: string;
-  series?: string;
-  product_image_url?: string;
-  created_at: string;
-  status: string;
+  id: string
+  name: string
+  category?: string
+  series?: string
+  product_image_url?: string
+  created_at: string
+  status: string
 }
 
 export default function EditProductPage() {
-  const { user, isLoading } = useUser();
-  const params = useParams();
-  const router = useRouter();
-  const partnerId = params.id as string;
-  const skuId = params.skuId as string;
-  
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [sku, setSku] = useState<SKU | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  
+  const { user, isLoading } = useUser()
+  const params = useParams()
+  const router = useRouter()
+  const partnerId = params.id as string
+  const skuId = params.skuId as string
+
+  const [partner, setPartner] = useState<Partner | null>(null)
+  const [sku, setSku] = useState<SKU | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
   const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    image_url: '',
-    status: 'active'
-  });
+    name: "",
+    category: "",
+    image_url: "",
+    status: "active",
+  })
 
   useEffect(() => {
     if (!isLoading && user && partnerId && skuId) {
-      fetchProductData();
+      fetchProductData()
     }
-  }, [user, isLoading, partnerId, skuId]);
+  }, [user, isLoading, partnerId, skuId])
 
   const fetchProductData = async () => {
     try {
-      setLoading(true);
-      
+      setLoading(true)
+
       // Fetch partner details
-      const partnerResponse = await fetch(`/api/partners/${partnerId}`);
+      const partnerResponse = await fetch(`/api/partners/${partnerId}`)
       if (partnerResponse.ok) {
-        const partnerData = await partnerResponse.json();
-        setPartner(partnerData);
+        const partnerData = await partnerResponse.json()
+        setPartner(partnerData)
       } else {
-        setError('Partner not found');
-        return;
+        setError("Partner not found")
+        return
       }
 
       // Fetch product details
-      const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`);
+      const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`)
       if (skuResponse.ok) {
-        const skuData = await skuResponse.json();
-        setSku(skuData);
-        
+        const skuData = await skuResponse.json()
+        setSku(skuData)
+
         // Populate form with existing data
         setFormData({
-          name: skuData.name || '',
-          category: skuData.category || '',
-          image_url: skuData.product_image_url || '',
-          status: skuData.status || 'active'
-        });
+          name: skuData.name || "",
+          category: skuData.category || "",
+          image_url: skuData.product_image_url || "",
+          status: skuData.status || "active",
+        })
       } else {
-        setError('Product not found');
-        return;
+        setError("Product not found")
+        return
       }
     } catch (error) {
-      console.error('Error fetching product data:', error);
-      setError('Failed to load product data');
+      console.error("Error fetching product data:", error)
+      setError("Failed to load product data")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
-    }));
-  };
+      [name]: value,
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     if (!formData.name.trim()) {
-      setError('Product name is required');
-      return;
+      setError("Product name is required")
+      return
     }
 
     try {
-      setSubmitting(true);
-      setError('');
+      setSubmitting(true)
+      setError("")
 
       const response = await fetch(`/api/partners/${partnerId}/skus/${skuId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (response.ok) {
-        const updatedProduct = await response.json();
-        router.push(`/dashboard/partners/${partnerId}/skus/${skuId}`);
+        const updatedProduct = await response.json()
+        router.push(`/dashboard/partners/${partnerId}/skus/${skuId}`)
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to update product');
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to update product")
       }
     } catch (error) {
-      console.error('Error updating product:', error);
-      setError('Failed to update product');
+      console.error("Error updating product:", error)
+      setError("Failed to update product")
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-    );
+    )
   }
 
   if (!user) {
@@ -147,7 +149,7 @@ export default function EditProductPage() {
           <p className="text-gray-600">Please sign in to access the partner portal.</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (error || !partner || !sku) {
@@ -155,13 +157,18 @@ export default function EditProductPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Error</h1>
-          <p className="text-gray-600 mb-6">{error || 'The requested product could not be found.'}</p>
-          <Link href={`/dashboard/partners/${partnerId}`} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+          <p className="text-gray-600 mb-6">
+            {error || "The requested product could not be found."}
+          </p>
+          <Link
+            href={`/dashboard/partners/${partnerId}`}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
             Back to Partner
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -176,7 +183,7 @@ export default function EditProductPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to {sku.name}
           </Link>
-          
+
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -185,7 +192,9 @@ export default function EditProductPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
-              <p className="text-gray-600">Update {sku.name} for {partner.name}</p>
+              <p className="text-gray-600">
+                Update {sku.name} for {partner.name}
+              </p>
             </div>
           </div>
         </div>
@@ -312,5 +321,5 @@ export default function EditProductPage() {
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}
