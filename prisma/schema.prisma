@@ -12,7 +12,7 @@ datasource db {
 model Partner {
   id             String   @id @default(uuid())
   name           String
-  type           PartnerType
+  type           String
   logo_url       String?  @db.Text
   organization_id String? @db.Text
   status         String   @default("active")
@@ -21,11 +21,6 @@ model Partner {
 
   skus           Sku[]
   partnerUsers   PartnerUser[]
-}
-
-enum PartnerType {
-  artist
-  merch_supplier
 }
 
 model User {
