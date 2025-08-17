@@ -19,13 +19,12 @@ model Partner {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  games          Game[]
   skus           Sku[]
   partnerUsers   PartnerUser[]
 }
 
 enum PartnerType {
-  game_studio
+  artist
   merch_supplier
 }
 
@@ -70,38 +69,6 @@ enum PartnerUserStatus {
   inactive
 }
 
-model Game {
-  id          String   @id @default(uuid())
-  partner     Partner  @relation(fields: [partner_id], references: [id])
-  partner_id  String
-  name        String
-  type        String?
-  picture_url String?
-  status      String   @default("active")
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  client_ids  ClientId[]
-}
-
-model ClientId {
-  id          String   @id @default(uuid())
-  game        Game     @relation(fields: [game_id], references: [id])
-  game_id     String
-  client_name String
-  client_type ClientType
-  client_id   String   @unique
-  created_at  DateTime @default(now())
-  status      String   @default("active")
-}
-
-enum ClientType {
-  native_mobile_android
-  native_mobile_ios
-  web
-  M2M
-}
-
 model Sku {
   id               String   @id @default(uuid())
   partner          Partner  @relation(fields: [partner_id], references: [id])
@@ -124,4 +91,3 @@ model AuditLog {
   details       Json?
   created_at    DateTime @default(now())
 }
-
