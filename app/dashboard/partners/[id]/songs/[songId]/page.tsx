@@ -1,10 +1,11 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Edit, Trash2, Gamepad2, Users, Settings, Eye } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Eye } from "lucide-react"
+import Image from "next/image"
 
 interface Game {
   id: string
@@ -28,7 +29,7 @@ interface ClientId {
 }
 
 export default function GameDetailPage() {
-  const { user, isLoading } = useOktaAuth()
+  const { user, isLoading } = useUser()
   const params = useParams()
   const router = useRouter()
   const partnerId = params.id as string
@@ -227,7 +228,7 @@ export default function GameDetailPage() {
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0 relative">
                 {game.picture_url ? (
-                  <img
+                  <Image
                     src={game.picture_url}
                     alt={`${game.name} logo`}
                     className="h-20 w-20 rounded-lg object-cover"

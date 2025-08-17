@@ -1,20 +1,21 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Gamepad2, Upload, Eye, EyeOff } from "lucide-react"
+import Image from "next/image"
 
 interface Partner {
   id: string
   name: string
-  type: "game_studio" | "merch_supplier"
+  type: "artist" | "merch_supplier"
   logo_url?: string
 }
 
 export default function NewGamePage() {
-  const { user, isLoading } = useOktaAuth()
+  const { user, isLoading } = useUser()
   const params = useParams()
   const router = useRouter()
   const partnerId = params.id as string
@@ -277,7 +278,7 @@ export default function NewGamePage() {
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Provide a direct link to the game's image
+                Provide a direct link to the game&apos;s image
               </p>
             </div>
 
@@ -317,7 +318,7 @@ export default function NewGamePage() {
                       </div>
                     ) : (
                       <div className="flex justify-center">
-                        <img
+                        <Image
                           src={formData.picture_url}
                           alt="Game preview"
                           className="max-w-full max-h-64 rounded-lg shadow-sm"

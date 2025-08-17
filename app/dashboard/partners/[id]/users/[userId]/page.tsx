@@ -18,7 +18,7 @@ interface User {
 interface Partner {
   id: string
   name: string
-  type: "game_studio" | "merch_supplier"
+  type: "artist" | "merch_supplier"
 }
 
 export default function UserDetailsPage() {
@@ -47,19 +47,7 @@ export default function UserDetailsPage() {
 
   const fetchPartnerData = async () => {
     try {
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
-      const response = await fetch(`/api/partners/${partnerId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
+      const response = await fetch(`/api/partners/${partnerId}`)
       if (response.ok) {
         const data = await response.json()
         setPartner(data)
@@ -71,18 +59,8 @@ export default function UserDetailsPage() {
 
   const fetchUserData = async () => {
     try {
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
       })
       if (response.ok) {
         const data = await response.json()
@@ -108,19 +86,10 @@ export default function UserDetailsPage() {
     setSaving(true)
 
     try {
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(formData),
       })
@@ -152,19 +121,9 @@ export default function UserDetailsPage() {
     setDeleting(true)
 
     try {
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
       })
 
       if (response.ok) {

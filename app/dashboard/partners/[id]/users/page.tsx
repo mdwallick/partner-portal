@@ -1,8 +1,8 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useEffect, useState } from "react"
-import { Users, Plus, Trash2, Mail, ArrowLeft, Eye } from "lucide-react"
+import { Users, Trash2, Mail, ArrowLeft, Eye } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import toast from "react-hot-toast"
@@ -19,11 +19,11 @@ interface User {
 interface Partner {
   id: string
   name: string
-  type: "game_studio" | "merch_supplier"
+  type: "artist" | "merch_supplier"
 }
 
 export default function PartnerUsersPage() {
-  const { user, isLoading } = useOktaAuth()
+  const { user, isLoading } = useUser()
   const params = useParams()
   const router = useRouter()
   const partnerId = params.id as string
@@ -36,8 +36,8 @@ export default function PartnerUsersPage() {
   const [inviteLastName, setInviteLastName] = useState("")
   const [inviteRole, setInviteRole] = useState("can_view")
   const [inviting, setInviting] = useState(false)
-  const [userCanView, setUserCanView] = useState(false)
-  const [userCanAdmin, setUserCanAdmin] = useState(false)
+  const [_userCanView, setUserCanView] = useState(false)
+  const [_userCanAdmin, setUserCanAdmin] = useState(false)
   const [userCanManageMembers, setUserCanManageMembers] = useState(false)
 
   useEffect(() => {
@@ -53,19 +53,7 @@ export default function PartnerUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
-      const response = await fetch(`/api/partners/${partnerId}/users`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
+      const response = await fetch(`/api/partners/${partnerId}/users`)
       if (response.ok) {
         const data = await response.json()
         console.log("Users API response:", data)
@@ -88,20 +76,9 @@ export default function PartnerUsersPage() {
     setInviting(true)
 
     try {
-      // Get the access token
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       const response = await fetch(`/api/partners/${partnerId}/users`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: inviteEmail,
           firstName: inviteFirstName,
@@ -139,19 +116,9 @@ export default function PartnerUsersPage() {
     }
 
     try {
-      // Get the access token
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
       })
 
       if (response.ok) {

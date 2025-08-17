@@ -1,6 +1,6 @@
 "use client"
 
-import { useUser } from "@auth0/nextjs-auth0/client"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -9,7 +9,7 @@ import { ArrowLeft, ShoppingBag, Upload } from "lucide-react"
 interface Partner {
   id: string
   name: string
-  type: "game_studio" | "merch_supplier"
+  type: "artist" | "merch_supplier"
   logo_url?: string
 }
 
@@ -119,7 +119,7 @@ export default function EditProductPage() {
       })
 
       if (response.ok) {
-        const updatedProduct = await response.json()
+        const _updatedProduct = await response.json()
         router.push(`/dashboard/partners/${partnerId}/skus/${skuId}`)
       } else {
         const errorData = await response.json()
@@ -287,7 +287,7 @@ export default function EditProductPage() {
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Provide a direct link to the product's image
+                Provide a direct link to the product&apos;s image
               </p>
             </div>
 
