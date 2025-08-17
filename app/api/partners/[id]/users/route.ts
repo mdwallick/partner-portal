@@ -1,36 +1,39 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkPermission, writeTuple, deleteTuple } from "@/lib/fga"
-import { requireAuth } from "@/lib/auth"
-import { oktaManagementAPI } from "@/lib/okta-management"
+import { auth0ManagementAPI } from "@/lib/auth0-management"
 import { prisma } from "@/lib/prisma"
+import { auth0 } from "@/lib/auth0"
+
+import type { PartnerUser } from "@/lib/types"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
     const partnerId = params.id
 
-    console.log(`✅❓ FGA check: is user ${user.sub} related to partner ${partnerId} as can_view?`)
+    console.log(`✅❓ FGA check: is user ${user?.sub} related to partner ${partnerId} as can_view?`)
 
     // Check if user has can_view permission on the partner
     const user_can_view = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_view",
       `partner:${partnerId}`
     )
     console.log(user_can_view)
 
     console.log(
-      `✅❓ FGA check: is user ${user.sub} related to partner ${partnerId} as can_manage_members?`
+      `✅❓ FGA check: is user ${user?.sub} related to partner ${partnerId} as can_manage_members?`
     )
     const user_can_manage_members = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_manage_members",
       `partner:${partnerId}`
     )
     console.log(user_can_manage_members)
 
     if (!user_can_view) {
-      console.log(`❌ User ${user.sub} is not authorized to view partner ${partnerId}`)
+      console.log(`❌ User ${user?.sub} is not authorized to view partner ${partnerId}`)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -53,7 +56,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     })
 
     // Map database roles to frontend roles for display
-    const mappedTeamMembers = partnerUsers.map(pu => ({
+    const mappedTeamMembers = partnerUsers.map((pu: PartnerUser) => ({
       id: pu.id,
       role: pu.role,
       status: pu.status,
@@ -61,8 +64,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       joined_at: pu.joined_at,
       created_at: pu.created_at,
       email: pu.email,
-      display_name: pu.user?.display_name ?? null,
-      auth0_user_id: pu.user?.auth0_user_id ?? null,
+      display_name: pu.display_name ?? null,
+      auth0_user_id: pu.auth0_user_id ?? null,
     }))
 
     console.log(`Found ${mappedTeamMembers.length} team members for partner ${partnerId}`)
@@ -89,7 +92,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
+
     const partnerId = params.id
 
     const body = await request.json()
@@ -112,19 +117,19 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     console.log(
-      `✅❓ FGA check: is user ${user.sub} related to partner ${partnerId} as can_manage_members?`
+      `✅❓ FGA check: is user ${user?.sub} related to partner ${partnerId} as can_manage_members?`
     )
 
     // Check if user has can_manage_members permission on the partner
     const user_can_manage_members = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_manage_members",
       `partner:${partnerId}`
     )
 
     if (!user_can_manage_members) {
       console.log(
-        `❌ User ${user.sub} is not authorized to manage members for partner ${partnerId}`
+        `❌ User ${user?.sub} is not authorized to manage members for partner ${partnerId}`
       )
       return NextResponse.json(
         { error: "Forbidden - insufficient permissions. You need can_manage_members permission." },
@@ -162,32 +167,28 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // 2. Create user in Okta with proper groups and set as active
     console.log(`Creating Okta user for email: ${email} with name: ${firstName} ${lastName}`)
-    let oktaUserId: string
+    let userId: string
 
     try {
       // Create user in Okta with first name and last name
       const displayName = `${firstName} ${lastName}`
-      const oktaUser = await oktaManagementAPI.createUser(
+      const user = await auth0ManagementAPI.createUser({
         email,
-        displayName,
-        partner.organization_id
-      )
-      oktaUserId = oktaUser.user_id
-      console.log(`✅ Created Okta user: ${oktaUserId} for email: ${email}`)
-
-      // Add user to the main partner group (00gokkv76cF6V5no21d7)
-      await oktaManagementAPI.addUserToGroup(oktaUserId, "00gokkv76cF6V5no21d7")
-      console.log(`✅ Added user ${oktaUserId} to main partner group: 00gokkv76cF6V5no21d7`)
+        name: displayName,
+        app_metadata: {
+          partner_id: partner.organization_id,
+          partner_name: partner.name,
+          partner_type: partner.type,
+        },
+      })
+      userId = user.id
+      console.log(`✅ Created user: ${userId} for email: ${email}`)
 
       // Add user to the specific partner group
-      await oktaManagementAPI.addUserToGroup(oktaUserId, partner.organization_id)
-      console.log(`✅ Added user ${oktaUserId} to partner group: ${partner.organization_id}`)
-
-      // Activate the user in Okta
-      await oktaManagementAPI.activateUser(oktaUserId)
-      console.log(`✅ Activated Okta user: ${oktaUserId}`)
-    } catch (oktaError) {
-      console.error("Failed to create Okta user:", oktaError)
+      await auth0ManagementAPI.addUserToOrganization(userId, partner.organization_id)
+      console.log(`✅ Added user ${userId} to partner: ${partner.organization_id}`)
+    } catch (error) {
+      console.error("Failed to create Okta user:", error)
       return NextResponse.json({ error: "Failed to create Okta user" }, { status: 500 })
     }
 
@@ -198,8 +199,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       console.log(`✅ Deleted temporary FGA tuple: user:${tempUserId} ${role} partner:${partnerId}`)
 
       // Create the real tuple with the Okta user ID
-      await writeTuple(`user:${oktaUserId}`, role, `partner:${partnerId}`)
-      console.log(`✅ Created FGA tuple: user:${oktaUserId} ${role} partner:${partnerId}`)
+      await writeTuple(`user:${userId}`, role, `partner:${partnerId}`)
+      console.log(`✅ Created FGA tuple: user:${userId} ${role} partner:${partnerId}`)
     } catch (fgaError) {
       console.error("Failed to update FGA tuple:", fgaError)
       return NextResponse.json({ error: "Failed to create FGA permissions" }, { status: 500 })
@@ -208,7 +209,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // 4. Create user record in DB
     const createdUser = await prisma.user.create({
       data: {
-        auth0_user_id: oktaUserId,
+        auth0_user_id: userId,
         email,
         display_name: `${firstName} ${lastName}`,
       },

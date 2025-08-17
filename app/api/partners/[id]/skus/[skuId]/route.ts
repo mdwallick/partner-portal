@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { auth0 } from "@/lib/auth0"
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string; skuId: string } }
 ) {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
     const partnerId = params.id
     const skuId = params.skuId
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
     // Fetch SKU details from database
     const sku = await prisma.sku.findFirst({ where: { id: skuId, partner_id: partnerId } })
@@ -33,7 +38,13 @@ export async function PUT(
   { params }: { params: { id: string; skuId: string } }
 ) {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const partnerId = params.id
     const skuId = params.skuId
     const body = await request.json()
@@ -81,7 +92,13 @@ export async function DELETE(
   { params }: { params: { id: string; skuId: string } }
 ) {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const partnerId = params.id
     const skuId = params.skuId
 

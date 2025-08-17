@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { auth0 } from "@/lib/auth0"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET({ params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
     const partnerId = params.id
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
     // Fetch SKUs from database
     const skus = await prisma.sku.findMany({
@@ -25,9 +30,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
     const partnerId = params.id
     const body = await request.json()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
     // Validate required fields
     if (!body.name || !body.name.trim()) {

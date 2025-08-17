@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkPermission } from "@/lib/fga"
-import { oktaManagementAPI } from "@/lib/okta-management"
-import { requireAuth } from "@/lib/auth"
+import { auth0ManagementAPI } from "@/lib/auth0-management"
 import { prisma } from "@/lib/prisma"
+import { auth0 } from "@/lib/auth0"
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +11,8 @@ export async function GET(
   try {
     console.log("GET /api/partners/[id]/users/[userId] - Starting...")
 
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
 
     const partnerId = params.id
     const userId = params.userId
@@ -21,7 +22,7 @@ export async function GET(
     console.log("🔍 Checking FGA permissions...")
 
     const hasViewAccess = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_view",
       `partner:${partnerId}`
     )
@@ -34,7 +35,7 @@ export async function GET(
 
     // Check if user has manage_members permission for editing capabilities
     const hasManageMembersAccess = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_manage_members",
       `partner:${partnerId}`
     )
@@ -93,7 +94,8 @@ export async function PUT(
   try {
     console.log("PUT /api/partners/[id]/users/[userId] - Starting...")
 
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
 
     const partnerId = params.id
     const userId = params.userId
@@ -107,7 +109,7 @@ export async function PUT(
     console.log("🔍 Checking FGA permissions...")
 
     const hasManageMembersAccess = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_manage_members",
       `partner:${partnerId}`
     )
@@ -155,7 +157,7 @@ export async function PUT(
 
       try {
         if (currentPU.user?.auth0_user_id) {
-          await oktaManagementAPI.updateUser(currentPU.user.auth0_user_id, { name: display_name })
+          await auth0ManagementAPI.updateUser(currentPU.user.auth0_user_id, { name: display_name })
         }
         console.log("✅ Updated Auth0 user display name")
       } catch (error) {
@@ -194,6 +196,7 @@ export async function PUT(
           })
           console.log("✅ Deleted old FGA tuple")
         } catch (deleteError) {
+          console.error("❌ Failed to delete old FGA tuple:", deleteError)
           console.log("⚠️ Old FGA tuple not found or already deleted, continuing...")
         }
 
@@ -262,7 +265,8 @@ export async function DELETE(
   try {
     console.log("DELETE /api/partners/[id]/users/[userId] - Starting...")
 
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
     console.log("Authenticated user:", user)
 
     const partnerId = params.id
@@ -272,7 +276,7 @@ export async function DELETE(
     console.log("🔍 Checking FGA permissions...")
 
     const hasManageMembersAccess = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_manage_members",
       `partner:${partnerId}`
     )
@@ -365,7 +369,7 @@ export async function DELETE(
           `Attempting to permanently delete Okta user: ${partnerUser.user?.auth0_user_id}`
         )
         if (partnerUser.user?.auth0_user_id) {
-          await oktaManagementAPI.deleteUser(partnerUser.user.auth0_user_id)
+          await auth0ManagementAPI.deleteUser(partnerUser.user.auth0_user_id)
         }
         console.log("✅ Permanently deleted user from Okta")
       } catch (error) {

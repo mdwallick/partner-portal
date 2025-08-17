@@ -1,6 +1,6 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
+//import { useUser } from "@auth0/nextjs-auth0"
 import { useEffect, useState } from "react"
 import { DollarSign, Clock, Users, Tv, ChevronDown, Download } from "lucide-react"
 import {
@@ -63,7 +63,7 @@ const watchTimeByGenre = [
 ]
 
 export default function DashboardPage() {
-  const { user } = useOktaAuth()
+  //const { user, isLoading } = useUser()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

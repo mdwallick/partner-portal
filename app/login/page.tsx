@@ -13,18 +13,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     const isLogout = searchParams.get("logout") === "true"
-    const hasError = searchParams.get("error")
+    //const hasError = searchParams.get("error")
 
     // If user is logged in and this is not a logout redirect, go to dashboard
     if (user && !isLogout) {
       router.push("/dashboard")
     }
   }, [user, router, searchParams])
-
-  const handleLogin = () => {
-    // Redirect to Okta's login page
-    window.location.href = "/auth/login"
-  }
 
   if (isLoading) {
     return (
@@ -37,7 +32,7 @@ export default function LoginPage() {
     )
   }
 
-  const isLogout = searchParams.get("logout") === "true"
+  const _isLogout = searchParams.get("logout") === "true"
   const hasError = searchParams.get("error")
 
   return (

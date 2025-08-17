@@ -1,8 +1,16 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { checkPermission } from "@/lib/fga"
+import { auth0 } from "@/lib/auth0"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
+    const session = await auth0.getSession()
+    const user = session?.user
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const userId = "email|687db976c6ecee58714033b3" // nico1@nicopowered.com
     const partnerId = "d87b44a4-f024-4dae-9ebd-be4c89857f7e"
 

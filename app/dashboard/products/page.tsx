@@ -1,13 +1,25 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { ShoppingBag, Plus, Edit, Trash2, Archive } from "lucide-react"
-import { Sku } from "@/lib/database"
+import { ShoppingBag, Plus, Edit, Archive } from "lucide-react"
+import Image from "next/image"
+
+interface Sku {
+  id: string
+  partner_id: string
+  name: string
+  category?: string
+  series?: string
+  product_image_url?: string
+  created_at: Date
+  updated_at: Date
+  status: string
+}
 
 export default function ProductsPage() {
-  const { user, isLoading } = useOktaAuth()
+  const { user, isLoading } = useUser()
   const [skus, setSkus] = useState<Sku[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -19,19 +31,7 @@ export default function ProductsPage() {
 
   const fetchSkus = async () => {
     try {
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
-      const response = await fetch("/api/sku", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
+      const response = await fetch("/api/sku")
       if (response.ok) {
         const data = await response.json()
         setSkus(data)
@@ -49,20 +49,7 @@ export default function ProductsPage() {
     }
 
     try {
-      // Get the access token
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
-      const response = await fetch(`/api/sku/${skuId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
+      const response = await fetch(`/api/sku/${skuId}`)
 
       if (response.ok) {
         setSkus(skus.map(sku => (sku.id === skuId ? { ...sku, status: "archived" } : sku)))
@@ -139,7 +126,7 @@ export default function ProductsPage() {
             <div key={sku.id} className="card">
               <div className="flex items-start justify-between mb-4">
                 {sku.product_image_url ? (
-                  <img
+                  <Image
                     src={sku.product_image_url}
                     alt={sku.name}
                     className="h-16 w-16 rounded-lg object-cover"

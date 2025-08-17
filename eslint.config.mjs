@@ -1,3 +1,4 @@
+// eslint.config.mjs
 import { dirname } from "path"
 import { fileURLToPath } from "url"
 import { FlatCompat } from "@eslint/eslintrc"
@@ -10,7 +11,7 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 })
 
-const eslintConfig = [
+export default [
   {
     ignores: [
       "**/lib/generated/**/*",
@@ -25,18 +26,24 @@ const eslintConfig = [
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
-    rules: {
-      "react-hooks/rules-of-hooks": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-      "@typescript-eslint/no-unused-expressions": "warn",
-      "prettier/prettier": "error",
-    },
+    files: ["**/*.{js,jsx,ts,tsx}"],
     plugins: {
       prettier,
     },
+    rules: {
+      "react-hooks/rules-of-hooks": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrors: "all",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      "@typescript-eslint/no-unused-expressions": "warn",
+      "prettier/prettier": "error",
+    },
   },
 ]
-
-export default eslintConfig

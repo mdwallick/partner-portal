@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { auth0 } from "@/lib/auth0"
-//import { getUserInfo } from '@/lib/okta';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Get the access token from cookies
+    // Get the access token from Auth0
     const session = await auth0.getSession()
     const accessToken = session?.tokenSet.accessToken
     const idToken = session?.tokenSet.idToken
@@ -20,8 +19,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user info from Okta
-    //const userInfo = await getUserInfo(accessToken);
+    // Get user info from Auth0
     const userInfo = {
       email: session.user.email,
       name: session.user.name,

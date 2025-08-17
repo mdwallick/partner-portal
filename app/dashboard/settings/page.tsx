@@ -1,12 +1,13 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
 import { useState } from "react"
-import { User, Shield, Bell, Globe, Key, Database, Trash2 } from "lucide-react"
-import toast from "react-hot-toast"
+import { User, Shield, Bell } from "lucide-react"
+import { useUser } from "@auth0/nextjs-auth0"
+import Image from "next/image"
+//import toast from "react-hot-toast"
 
 export default function SettingsPage() {
-  const { user } = useOktaAuth()
+  const { user } = useUser()
   const [activeTab, setActiveTab] = useState("profile")
 
   const tabs = [
@@ -49,7 +50,7 @@ export default function SettingsPage() {
           <label className="block text-sm font-medium text-gray-300">Profile Picture</label>
           <div className="flex items-center space-x-4">
             {user?.picture && (
-              <img
+              <Image
                 src={user.picture}
                 alt="Profile"
                 className="h-12 w-12 rounded-full border-2 border-gray-600"

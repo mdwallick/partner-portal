@@ -1,5 +1,4 @@
-import { NextRequest } from "next/server"
-import { getSession } from "@auth0/nextjs-auth0"
+import { auth0 } from "@/lib/auth0"
 
 export interface AuthenticatedUser {
   sub: string
@@ -10,10 +9,9 @@ export interface AuthenticatedUser {
   email_verified: boolean
 }
 
-export async function getAuthenticatedUser(req: NextRequest): Promise<AuthenticatedUser | null> {
+export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> {
   try {
-    const res = new Response()
-    const session = await getSession(req as any, res as any)
+    const session = await auth0.getSession()
     const user = session?.user
     if (!user) return null
     return {
@@ -30,9 +28,9 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<Authentica
   }
 }
 
-export async function requireAuth(req: NextRequest): Promise<AuthenticatedUser> {
+export async function requireAuth(): Promise<AuthenticatedUser> {
   try {
-    const user = await getAuthenticatedUser(req)
+    const user = await getAuthenticatedUser()
 
     if (!user) {
       console.log("🚫 Authentication required - no valid session found")
@@ -42,7 +40,7 @@ export async function requireAuth(req: NextRequest): Promise<AuthenticatedUser> 
     console.log(`👤 Authenticated user: ${user.email} (${user.sub})`)
     return user
   } catch (error) {
-    console.log("🚫 Authentication required - no valid session found")
+    console.log("🚫 Authentication required - no valid session found", error)
     throw new Error("Authentication required - please log in")
   }
 }
