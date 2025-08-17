@@ -1,0 +1,28 @@
+{
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "never"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "typescript.preferences.importModuleSpecifier": "project-relative",
+  "[mermaid]": {
+    "files.trimTrailingWhitespace": false
+  },
+  "[markdown]": {
+    "editor.formatOnSave": false,
+    "files.trimTrailingWhitespace": false
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "prettier.semi": false,
+  "javascript.format.semicolons": "remove",
+  "typescript.format.semicolons": "remove"
+}
