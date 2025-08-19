@@ -2,15 +2,7 @@
 
 //import { useUser } from "@auth0/nextjs-auth0"
 import { useEffect, useState } from "react"
-import {
-  DollarSign,
-  Users,
-  ChevronDown,
-  Download,
-  FileText,
-  Music2,
-  AlertTriangle,
-} from "lucide-react"
+import { DollarSign, ChevronDown, Download, FileText, Music2, AlertTriangle } from "lucide-react"
 import {
   LineChart,
   Line,
