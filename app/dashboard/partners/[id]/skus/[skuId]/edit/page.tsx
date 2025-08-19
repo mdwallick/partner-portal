@@ -45,48 +45,48 @@ export default function EditProductPage() {
 
   useEffect(() => {
     if (!isLoading && user && partnerId && skuId) {
+      const fetchProductData = async () => {
+        try {
+          setLoading(true)
+
+          // Fetch partner details
+          const partnerResponse = await fetch(`/api/partners/${partnerId}`)
+          if (partnerResponse.ok) {
+            const partnerData = await partnerResponse.json()
+            setPartner(partnerData)
+          } else {
+            setError("Partner not found")
+            return
+          }
+
+          // Fetch product details
+          const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`)
+          if (skuResponse.ok) {
+            const skuData = await skuResponse.json()
+            setSku(skuData)
+
+            // Populate form with existing data
+            setFormData({
+              name: skuData.name || "",
+              category: skuData.category || "",
+              image_url: skuData.product_image_url || "",
+              status: skuData.status || "active",
+            })
+          } else {
+            setError("Product not found")
+            return
+          }
+        } catch (error) {
+          console.error("Error fetching product data:", error)
+          setError("Failed to load product data")
+        } finally {
+          setLoading(false)
+        }
+      }
+
       fetchProductData()
     }
   }, [user, isLoading, partnerId, skuId])
-
-  const fetchProductData = async () => {
-    try {
-      setLoading(true)
-
-      // Fetch partner details
-      const partnerResponse = await fetch(`/api/partners/${partnerId}`)
-      if (partnerResponse.ok) {
-        const partnerData = await partnerResponse.json()
-        setPartner(partnerData)
-      } else {
-        setError("Partner not found")
-        return
-      }
-
-      // Fetch product details
-      const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`)
-      if (skuResponse.ok) {
-        const skuData = await skuResponse.json()
-        setSku(skuData)
-
-        // Populate form with existing data
-        setFormData({
-          name: skuData.name || "",
-          category: skuData.category || "",
-          image_url: skuData.product_image_url || "",
-          status: skuData.status || "active",
-        })
-      } else {
-        setError("Product not found")
-        return
-      }
-    } catch (error) {
-      console.error("Error fetching product data:", error)
-      setError("Failed to load product data")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>

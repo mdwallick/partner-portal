@@ -6,7 +6,7 @@ import { auth0 } from "@/lib/auth0"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; userId: string } }
+  { params }: { params: Promise<{ id: string; userId: string }> }
 ) {
   try {
     console.log("GET /api/partners/[id]/users/[userId] - Starting...")
@@ -14,8 +14,7 @@ export async function GET(
     const session = await auth0.getSession()
     const user = session?.user
 
-    const partnerId = params.id
-    const userId = params.userId
+    const { id: partnerId, userId } = await params
     console.log("Partner ID:", partnerId, "User ID:", userId)
 
     // Check FGA permissions - user must have can_view permission on the partner to view user details
@@ -89,7 +88,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; userId: string } }
+  { params }: { params: Promise<{ id: string; userId: string }> }
 ) {
   try {
     console.log("PUT /api/partners/[id]/users/[userId] - Starting...")
@@ -97,8 +96,7 @@ export async function PUT(
     const session = await auth0.getSession()
     const user = session?.user
 
-    const partnerId = params.id
-    const userId = params.userId
+    const { id: partnerId, userId } = await params
     console.log("Partner ID:", partnerId, "User ID:", userId)
 
     const body = await request.json()
@@ -260,7 +258,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; userId: string } }
+  { params }: { params: Promise<{ id: string; userId: string }> }
 ) {
   try {
     console.log("DELETE /api/partners/[id]/users/[userId] - Starting...")
@@ -269,8 +267,7 @@ export async function DELETE(
     const user = session?.user
     console.log("Authenticated user:", user)
 
-    const partnerId = params.id
-    const partnerUserId = params.userId
+    const { id: partnerId, userId: partnerUserId } = await params
 
     // Check FGA permissions - user must have can_manage_members permission on the partner
     console.log("🔍 Checking FGA permissions...")

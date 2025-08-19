@@ -209,6 +209,8 @@ export default function PartnersPage() {
                             <Image
                               src={partner.logo_url}
                               alt={`${partner.name} logo`}
+                              width={40}
+                              height={40}
                               className="h-10 w-10 rounded-lg object-cover"
                               onError={e => {
                                 // Hide the broken image and show fallback

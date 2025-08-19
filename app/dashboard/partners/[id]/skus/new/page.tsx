@@ -33,32 +33,32 @@ export default function AddProductPage() {
 
   useEffect(() => {
     if (!isLoading && user && partnerId) {
+      const fetchPartnerData = async () => {
+        try {
+          setLoading(true)
+          const response = await fetch(`/api/partners/${partnerId}`)
+          if (response.ok) {
+            const partnerData = await response.json()
+            setPartner(partnerData)
+
+            // Check if this is actually a merch supplier
+            if (partnerData.type !== "merch_supplier") {
+              setError("This partner is not a merchandise supplier")
+            }
+          } else {
+            setError("Partner not found")
+          }
+        } catch (error) {
+          console.error("Error fetching partner data:", error)
+          setError("Failed to load partner data")
+        } finally {
+          setLoading(false)
+        }
+      }
+
       fetchPartnerData()
     }
   }, [user, isLoading, partnerId])
-
-  const fetchPartnerData = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/partners/${partnerId}`)
-      if (response.ok) {
-        const partnerData = await response.json()
-        setPartner(partnerData)
-
-        // Check if this is actually a merch supplier
-        if (partnerData.type !== "merch_supplier") {
-          setError("This partner is not a merchandise supplier")
-        }
-      } else {
-        setError("Partner not found")
-      }
-    } catch (error) {
-      console.error("Error fetching partner data:", error)
-      setError("Failed to load partner data")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>

@@ -4,7 +4,7 @@ import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Edit, Trash2, Users, FileMusic, ShoppingBag, Eye } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Users, FileMusic, ShoppingBag, Eye, Trash } from "lucide-react"
 import Image from "next/image"
 import { Partner, Song, SKU, User } from "@/lib/types"
 
@@ -15,7 +15,7 @@ export default function PartnerDetailPage() {
   const partnerId = params.id as string
 
   const [partner, setPartner] = useState<Partner | null>(null)
-  const [songs, _setSongs] = useState<Song[]>([])
+  const [songs, setSongs] = useState<Song[]>([])
   const [skus, setSkus] = useState<SKU[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,92 +23,75 @@ export default function PartnerDetailPage() {
 
   useEffect(() => {
     if (!isLoading && user && partnerId) {
+      const fetchUsersData = async () => {
+        try {
+          const usersResponse = await fetch(`/api/partners/${partnerId}/users`)
+          if (usersResponse.ok) {
+            const usersData = await usersResponse.json()
+            setUsers(usersData.teamMembers || usersData) // Handle both new and old format
+          }
+        } catch (error) {
+          console.error("Error fetching users:", error)
+        }
+      }
+
+      const fetchSKUsData = async () => {
+        try {
+          const skusResponse = await fetch(`/api/partners/${partnerId}/skus`)
+          if (skusResponse.ok) {
+            const skusData = await skusResponse.json()
+            setSkus(skusData)
+          }
+        } catch (error) {
+          console.error("Error fetching SKUs:", error)
+        }
+      }
+
+      const fetchPartnerData = async () => {
+        try {
+          setLoading(true)
+
+          // Fetch partner details with Authorization header
+          const partnerResponse = await fetch(`/api/partners/${partnerId}`)
+          if (partnerResponse.ok) {
+            const partnerData = await partnerResponse.json()
+            setPartner(partnerData)
+
+            // Fetch related data based on partner type
+            if (partnerData.type === "artist") {
+              await fetchSongsData()
+            } else if (partnerData.type === "merch_supplier") {
+              await fetchSKUsData()
+            }
+
+            // Always fetch team members
+            await fetchUsersData()
+          } else {
+            setError("Partner not found")
+          }
+        } catch (error) {
+          console.error("Error fetching partner data:", error)
+          setError("Failed to load partner data")
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      const fetchSongsData = async () => {
+        try {
+          const songsResponse = await fetch(`/api/partners/${partnerId}/songs`)
+          if (songsResponse.ok) {
+            const songsData = await songsResponse.json()
+            setSongs(songsData)
+          }
+        } catch (error) {
+          console.error("Error fetching games:", error)
+        }
+      }
+
       fetchPartnerData()
     }
   }, [user, isLoading, partnerId])
-
-  const fetchPartnerData = async () => {
-    try {
-      setLoading(true)
-
-      // Fetch partner details with Authorization header
-      const partnerResponse = await fetch(`/api/partners/${partnerId}`)
-      if (partnerResponse.ok) {
-        const partnerData = await partnerResponse.json()
-        setPartner(partnerData)
-
-        // Fetch related data based on partner type
-        if (partnerData.type === "artist") {
-          //await fetchGamesData()
-          const _songs = []
-          console.log("🔍 Fetching songs data for artist")
-        } else if (partnerData.type === "merch_supplier") {
-          await fetchSKUsData()
-        }
-
-        // Always fetch team members
-        await fetchUsersData()
-      } else {
-        setError("Partner not found")
-      }
-    } catch (error) {
-      console.error("Error fetching partner data:", error)
-      setError("Failed to load partner data")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // const fetchGamesData = async (accessToken?: string) => {
-  //   try {
-  //     // Get access token if not provided
-  //     let token = accessToken
-  //     if (!token) {
-  //       const tokenResponse = await fetch("/api/auth/token")
-  //       if (!tokenResponse.ok) {
-  //         throw new Error("Failed to get access token")
-  //       }
-  //       const { accessToken: tokenData } = await tokenResponse.json()
-  //       token = tokenData
-  //     }
-
-  //     const gamesResponse = await fetch(`/api/partners/${partnerId}/games`, {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     if (gamesResponse.ok) {
-  //       const gamesData = await gamesResponse.json()
-  //       setGames(gamesData)
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching games:", error)
-  //   }
-  // }
-
-  const fetchSKUsData = async () => {
-    try {
-      const skusResponse = await fetch(`/api/partners/${partnerId}/skus`)
-      if (skusResponse.ok) {
-        const skusData = await skusResponse.json()
-        setSkus(skusData)
-      }
-    } catch (error) {
-      console.error("Error fetching SKUs:", error)
-    }
-  }
-
-  const fetchUsersData = async () => {
-    try {
-      const usersResponse = await fetch(`/api/partners/${partnerId}/users`)
-      if (usersResponse.ok) {
-        const usersData = await usersResponse.json()
-        setUsers(usersData.teamMembers || usersData) // Handle both new and old format
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error)
-    }
-  }
 
   const handleDeletePartner = async () => {
     if (
@@ -138,7 +121,7 @@ export default function PartnerDetailPage() {
   }
 
   const getPartnerTypeIcon = (type: string) => {
-    return type === "artist" ? "🎸" : "🛍️"
+    return type === "artist" ? "🎤" : "🛍️"
   }
 
   const getRoleBadge = (role: string) => {
@@ -228,6 +211,8 @@ export default function PartnerDetailPage() {
                   <Image
                     src={partner.logo_url}
                     alt={`${partner.name} logo`}
+                    width={80}
+                    height={80}
                     className="h-20 w-20 rounded-lg object-cover"
                   />
                 ) : (
@@ -352,12 +337,11 @@ export default function PartnerDetailPage() {
               {songs.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {songs.map(song => (
-                    <Link
+                    <div
                       key={song.id}
-                      href={`/dashboard/partners/${partnerId}/songs/${song.id}`}
-                      className="border border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow hover:border-orange-500 cursor-pointer bg-gray-700"
+                      className="border border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow hover:border-orange-500 bg-gray-700"
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0">
                           {song.picture_url ? (
                             <Image
@@ -367,19 +351,54 @@ export default function PartnerDetailPage() {
                             />
                           ) : (
                             <div className="h-12 w-12 bg-gray-600 rounded-lg flex items-center justify-center">
-                              <span className="text-gray-400 text-lg">🎮</span>
+                              <span className="text-gray-400 text-lg">🎵</span>
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-white truncate">{song.name}</h3>
-                          {/* TODO: Add song details */}
-                          {/* <p className="text-sm text-gray-400">
-                            {game.client_ids_count} client IDs
-                          </p> */}
+                          <Link
+                            href={`/dashboard/partners/${partnerId}/songs/${song.id}`}
+                            className="block"
+                          >
+                            <h3 className="font-medium text-white truncate">{song.name}</h3>
+                          </Link>
+                          <p className="text-sm text-gray-400">
+                            {song.genre || "Unknown genre"}
+                            {typeof (song as any).duration_s === "number" && (
+                              <>
+                                {" • "}
+                                {Math.floor(((song as any).duration_s || 0) / 60)}:
+                                {String(((song as any).duration_s || 0) % 60).padStart(2, "0")}
+                              </>
+                            )}
+                          </p>
                         </div>
+                        {partner.userCanAdmin && (
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Delete song "${song.name}"?`)) return
+                              try {
+                                const resp = await fetch(
+                                  `/api/partners/${partnerId}/songs/${song.id}`,
+                                  {
+                                    method: "DELETE",
+                                  }
+                                )
+                                if (resp.ok) {
+                                  setSongs(prev => prev.filter(s => s.id !== song.id))
+                                }
+                              } catch (e) {
+                                console.error("Failed to delete song", e)
+                              }
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-500"
+                            title="Delete song"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -421,6 +440,8 @@ export default function PartnerDetailPage() {
                             <Image
                               src={sku.image_url}
                               alt={sku.name}
+                              width={48}
+                              height={48}
                               className="h-12 w-12 rounded-lg object-cover"
                             />
                           ) : (

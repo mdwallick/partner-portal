@@ -1,12 +1,12 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { Shield, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 export default function UsersPage() {
-  const { user, isLoading } = useOktaAuth()
+  const { user, isLoading } = useUser()
   // const [users, setUsers] = useState([])
   // const [loading, setLoading] = useState(true)
   const [_loading, setLoading] = useState(true)

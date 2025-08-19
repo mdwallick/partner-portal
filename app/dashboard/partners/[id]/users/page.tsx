@@ -1,7 +1,7 @@
 "use client"
 
 import { useUser } from "@auth0/nextjs-auth0"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Users, Trash2, Mail, ArrowLeft, Eye } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -40,20 +40,10 @@ export default function PartnerUsersPage() {
   const [_userCanAdmin, setUserCanAdmin] = useState(false)
   const [userCanManageMembers, setUserCanManageMembers] = useState(false)
 
-  useEffect(() => {
-    if (!isLoading && user && partnerId) {
-      fetchUsers()
-    }
-  }, [user, isLoading, partnerId])
-
-  // Debug effect to log permission changes
-  useEffect(() => {
-    console.log("userCanManageMembers changed to:", userCanManageMembers)
-  }, [userCanManageMembers])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await fetch(`/api/partners/${partnerId}/users`)
+
       if (response.ok) {
         const data = await response.json()
         console.log("Users API response:", data)
@@ -69,7 +59,18 @@ export default function PartnerUsersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [partnerId])
+
+  useEffect(() => {
+    if (!isLoading && user && partnerId) {
+      fetchUsers()
+    }
+  }, [user, isLoading, partnerId, fetchUsers])
+
+  // Debug effect to log permission changes
+  useEffect(() => {
+    console.log("userCanManageMembers changed to:", userCanManageMembers)
+  }, [userCanManageMembers])
 
   const handleInviteUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,7 +79,9 @@ export default function PartnerUsersPage() {
     try {
       const response = await fetch(`/api/partners/${partnerId}/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           email: inviteEmail,
           firstName: inviteFirstName,
@@ -118,7 +121,6 @@ export default function PartnerUsersPage() {
     try {
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
       })
 
       if (response.ok) {

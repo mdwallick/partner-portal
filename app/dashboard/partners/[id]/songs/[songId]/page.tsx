@@ -19,15 +19,6 @@ interface Game {
   userCanAdmin?: boolean
 }
 
-interface ClientId {
-  id: string
-  client_name: string
-  client_id: string
-  client_type?: string
-  created_at: string
-  status: "active" | "inactive"
-}
-
 export default function GameDetailPage() {
   const { user, isLoading } = useUser()
   const params = useParams()
@@ -36,80 +27,46 @@ export default function GameDetailPage() {
   const gameId = params.gameId as string
 
   const [game, setGame] = useState<Game | null>(null)
-  const [clientIds, setClientIds] = useState<ClientId[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   useEffect(() => {
     if (!isLoading && user && partnerId && gameId) {
+      const fetchGameData = async () => {
+        try {
+          setLoading(true)
+
+          // Get the access token from the API
+          const tokenResponse = await fetch("/api/auth/token")
+          if (!tokenResponse.ok) {
+            throw new Error("Failed to get access token")
+          }
+
+          const { accessToken } = await tokenResponse.json()
+
+          // Fetch game details with Authorization header
+          const gameResponse = await fetch(`/api/partners/${partnerId}/games/${gameId}`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          })
+          if (gameResponse.ok) {
+            const gameData = await gameResponse.json()
+            setGame(gameData)
+          } else {
+            setError("Game not found")
+          }
+        } catch (error) {
+          console.error("Error fetching game data:", error)
+          setError("Failed to load game data")
+        } finally {
+          setLoading(false)
+        }
+      }
+
       fetchGameData()
     }
   }, [user, isLoading, partnerId, gameId])
-
-  const fetchGameData = async () => {
-    try {
-      setLoading(true)
-
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
-      // Fetch game details with Authorization header
-      const gameResponse = await fetch(`/api/partners/${partnerId}/games/${gameId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-      if (gameResponse.ok) {
-        const gameData = await gameResponse.json()
-        setGame(gameData)
-
-        // Fetch client IDs
-        await fetchClientIdsData(accessToken)
-      } else {
-        setError("Game not found")
-      }
-    } catch (error) {
-      console.error("Error fetching game data:", error)
-      setError("Failed to load game data")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchClientIdsData = async (accessToken?: string) => {
-    try {
-      // Get access token if not provided
-      let token = accessToken
-      if (!token) {
-        const tokenResponse = await fetch("/api/auth/token")
-        if (!tokenResponse.ok) {
-          throw new Error("Failed to get access token")
-        }
-        const { accessToken: tokenData } = await tokenResponse.json()
-        token = tokenData
-      }
-
-      const clientIdsResponse = await fetch(
-        `/api/partners/${partnerId}/games/${gameId}/client-ids`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      if (clientIdsResponse.ok) {
-        const clientIdsData = await clientIdsResponse.json()
-        setClientIds(clientIdsData)
-      }
-    } catch (error) {
-      console.error("Error fetching client IDs:", error)
-    }
-  }
 
   const handleDeleteGame = async () => {
     if (!confirm("Are you sure you want to delete this game? This action cannot be undone.")) {
@@ -153,25 +110,6 @@ export default function GameDetailPage() {
         return "bg-yellow-900 text-yellow-300"
       default:
         return "bg-gray-900 text-gray-300"
-    }
-  }
-
-  const getClientTypeLabel = (type: string) => {
-    switch (type) {
-      case "web":
-        return "Web"
-      case "native_mobile_android":
-        return "Android"
-      case "native_mobile_ios":
-        return "iOS"
-      case "native_desktop":
-        return "Desktop"
-      case "server":
-        return "Server"
-      case "sdk":
-        return "SDK"
-      default:
-        return type || "Unknown"
     }
   }
 
@@ -290,7 +228,7 @@ export default function GameDetailPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
+          {/* <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="h-8 w-8 bg-blue-900 rounded-lg flex items-center justify-center">
@@ -302,9 +240,9 @@ export default function GameDetailPage() {
                 <p className="text-2xl font-bold text-white">{clientIds.length}</p>
               </div>
             </div>
-          </div>
+          </div> */}
 
-          <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
+          {/* <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="h-8 w-8 bg-green-900 rounded-lg flex items-center justify-center">
@@ -318,7 +256,7 @@ export default function GameDetailPage() {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {game.userCanAdmin && (
             <Link
@@ -355,7 +293,7 @@ export default function GameDetailPage() {
             )}
           </div>
 
-          {clientIds.length > 0 ? (
+          {/* {clientIds.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-700">
                 <thead className="bg-gray-700">
@@ -422,7 +360,7 @@ export default function GameDetailPage() {
                 </Link>
               )}
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

@@ -38,36 +38,36 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (!isLoading && user && partnerId && skuId) {
+      const fetchSkuData = async () => {
+        try {
+          setLoading(true)
+
+          // Fetch partner details
+          const partnerResponse = await fetch(`/api/partners/${partnerId}`)
+          if (partnerResponse.ok) {
+            const partnerData = await partnerResponse.json()
+            setPartner(partnerData)
+          }
+
+          // Fetch SKU details
+          const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`)
+          if (skuResponse.ok) {
+            const skuData = await skuResponse.json()
+            setSku(skuData)
+          } else {
+            setError("SKU not found")
+          }
+        } catch (error) {
+          console.error("Error fetching SKU data:", error)
+          setError("Failed to load SKU data")
+        } finally {
+          setLoading(false)
+        }
+      }
+
       fetchSkuData()
     }
   }, [user, isLoading, partnerId, skuId])
-
-  const fetchSkuData = async () => {
-    try {
-      setLoading(true)
-
-      // Fetch partner details
-      const partnerResponse = await fetch(`/api/partners/${partnerId}`)
-      if (partnerResponse.ok) {
-        const partnerData = await partnerResponse.json()
-        setPartner(partnerData)
-      }
-
-      // Fetch SKU details
-      const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`)
-      if (skuResponse.ok) {
-        const skuData = await skuResponse.json()
-        setSku(skuData)
-      } else {
-        setError("SKU not found")
-      }
-    } catch (error) {
-      console.error("Error fetching SKU data:", error)
-      setError("Failed to load SKU data")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleDeleteSku = async () => {
     if (!confirm("Are you sure you want to delete this SKU? This action cannot be undone.")) {

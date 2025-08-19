@@ -1,6 +1,5 @@
 "use client"
 
-//import { useOktaAuth } from '@/lib/use-okta-auth';
 import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { ChevronUp, ChevronDown, Copy, Eye, EyeOff, Eye as EyeIcon } from "lucide-react"
@@ -104,8 +103,17 @@ export default function TokenDebugger() {
     <div className="fixed bottom-0 left-0 right-0 z-50">
       <div className="bg-gray-900 text-white border-t border-gray-700">
         {/* Header */}
-        <button
+        <div
+          role="button"
+          tabIndex={0}
+          aria-expanded={isExpanded}
           onClick={() => setIsExpanded(!isExpanded)}
+          onKeyDown={e => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              setIsExpanded(prev => !prev)
+            }
+          }}
           className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-800 transition-colors"
         >
           <div className="flex items-center space-x-2">
@@ -125,9 +133,11 @@ export default function TokenDebugger() {
             >
               {showTokens ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            <span aria-hidden="true">
+              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            </span>
           </div>
-        </button>
+        </div>
 
         {/* Content */}
         {isExpanded && (

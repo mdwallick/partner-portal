@@ -6,11 +6,11 @@ import { auth0 } from "@/lib/auth0"
 
 import type { PartnerUser } from "@/lib/types"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth0.getSession()
     const user = session?.user
-    const partnerId = params.id
+    const { id: partnerId } = await params
 
     console.log(`✅❓ FGA check: is user ${user?.sub} related to partner ${partnerId} as can_view?`)
 
@@ -58,6 +58,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Map database roles to frontend roles for display
     const mappedTeamMembers = partnerUsers.map((pu: PartnerUser) => ({
       id: pu.id,
+      partnerId: pu.partner_id,
       role: pu.role,
       status: pu.status,
       invited_at: pu.invited_at,
@@ -90,12 +91,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth0.getSession()
     const user = session?.user
 
-    const partnerId = params.id
+    const { id: partnerId } = await params
 
     const body = await request.json()
     const { email, firstName, lastName, role = "can_view" } = body
@@ -167,11 +168,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // 2. Create user in Okta with proper groups and set as active
     console.log(`Creating Okta user for email: ${email} with name: ${firstName} ${lastName}`)
-    let userId: string
+    let userId: string = "fixme"
 
     try {
       // Create user in Okta with first name and last name
       const displayName = `${firstName} ${lastName}`
+
       const user = await auth0ManagementAPI.createUser({
         email,
         name: displayName,
@@ -180,16 +182,17 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           partner_name: partner.name,
           partner_type: partner.type,
         },
+        connection: process.env.AUTH0_DB_CONNECTION_ID,
       })
       userId = user.id
       console.log(`✅ Created user: ${userId} for email: ${email}`)
 
       // Add user to the specific partner group
-      await auth0ManagementAPI.addUserToOrganization(userId, partner.organization_id)
+      await auth0ManagementAPI.addUserToOrganization(partner.organization_id, userId)
       console.log(`✅ Added user ${userId} to partner: ${partner.organization_id}`)
     } catch (error) {
-      console.error("Failed to create Okta user:", error)
-      return NextResponse.json({ error: "Failed to create Okta user" }, { status: 500 })
+      console.error("Failed to invite user:", error)
+      return NextResponse.json({ error: "Failed to invite user" }, { status: 500 })
     }
 
     // 3. Update the FGA tuple with the real Okta user ID

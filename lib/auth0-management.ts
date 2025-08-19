@@ -248,11 +248,19 @@ export class Auth0ManagementAPI {
 
   // MEMBERSHIP HELPERS (optional)
 
+  async inviteUserToOrganization(
+    orgId: string,
+    params: {
+      email: string
+      inviter_name?: string
+      app_metadata?: JsonRecord
+    }
+  ): Promise<void> {
+    await this.createOrganizationInvitation(orgId, params)
+  }
+
   async addUserToOrganization(orgId: string, userId: string): Promise<void> {
-    await this.mgmt.organizations.addMembers(
-      { id: orgId } as any,
-      { members: [{ user_id: userId }] } as any
-    )
+    await this.mgmt.organizations.addMembers({ id: orgId } as any, { members: [userId] } as any)
   }
 
   async removeUserFromOrganization(orgId: string, userId: string): Promise<void> {
@@ -277,6 +285,27 @@ export class Auth0ManagementAPI {
       ? (res as any).data
       : ((res as any).data?.members ?? [])
     return members.map((u: any) => toUserSummary(u))
+  }
+
+  // Invitations
+  async createOrganizationInvitation(
+    orgId: string,
+    params: {
+      email: string
+      inviter_name?: string
+      app_metadata?: JsonRecord
+    }
+  ): Promise<any> {
+    const body: any = {
+      invitee: { email: params.email },
+      inviter: params.inviter_name ? { name: params.inviter_name } : undefined,
+      client_id: process.env.AUTH0_CLIENT_ID,
+      connection_id: process.env.AUTH0_DB_CONNECTION_ID || "Username-Password-Authentication",
+      app_metadata: params.app_metadata,
+      send_invitation_email: true,
+    }
+    const { data } = await this.mgmt.organizations.createInvitation({ id: orgId } as any, body)
+    return data
   }
 
   // (Optional) Aliases to ease future swaps from Okta-style names

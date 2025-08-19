@@ -4,11 +4,11 @@ import { auth0ManagementAPI } from "@/lib/auth0-management"
 import { prisma } from "@/lib/prisma"
 import { auth0 } from "@/lib/auth0"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth0.getSession()
     const user = session?.user
-    const partnerId = params.id
+    const { id: partnerId } = await params
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth0.getSession()
     const user = session?.user
@@ -79,7 +79,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const partnerId = params.id
+    const { id: partnerId } = await params
     const body = await request.json()
     const { name, logo_url } = body
 
@@ -130,11 +130,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await auth0.getSession()
     const user = session?.user
-    const partnerId = params.id
+    const { id: partnerId } = await params
 
     // Check if user has platform-level super admin access
     const hasSuperAdminAccess = await checkPermission(

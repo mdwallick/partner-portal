@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth0 } from "@/lib/auth0"
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET({ params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth0.getSession()
     const user = session?.user
-    const partnerId = params.id
+    const { id: partnerId } = await params
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -28,11 +28,11 @@ export async function GET({ params }: { params: { id: string } }) {
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth0.getSession()
     const user = session?.user
-    const partnerId = params.id
+    const { id: partnerId } = await params
     const body = await request.json()
 
     if (!user) {

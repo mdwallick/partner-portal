@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { ArrowLeft, Save, User, Mail, Shield, Trash2 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -38,14 +38,7 @@ export default function UserDetailsPage() {
     role: "",
   })
 
-  useEffect(() => {
-    if (partnerId && userId) {
-      fetchPartnerData()
-      fetchUserData()
-    }
-  }, [partnerId, userId])
-
-  const fetchPartnerData = async () => {
+  const fetchPartnerData = useCallback(async () => {
     try {
       const response = await fetch(`/api/partners/${partnerId}`)
       if (response.ok) {
@@ -55,9 +48,9 @@ export default function UserDetailsPage() {
     } catch (error) {
       console.error("Error fetching partner:", error)
     }
-  }
+  }, [partnerId])
 
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
         headers: { "Content-Type": "application/json" },
@@ -79,7 +72,14 @@ export default function UserDetailsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [partnerId, userId])
+
+  useEffect(() => {
+    if (partnerId && userId) {
+      fetchPartnerData()
+      fetchUserData()
+    }
+  }, [partnerId, userId, fetchPartnerData, fetchUserData])
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()

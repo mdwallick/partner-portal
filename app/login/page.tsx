@@ -1,6 +1,5 @@
 "use client"
 
-//import { useOktaAuth } from '@/lib/use-okta-auth';
 import { useUser } from "@auth0/nextjs-auth0"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect } from "react"
@@ -40,8 +39,8 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-8 text-center">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Partner Portal</h1>
-            <p className="text-gray-400">Manage your games and products with ease</p>
+            <h1 className="text-3xl font-bold text-white mb-2">Artist Portal</h1>
+            <p className="text-gray-400">Manage your songs and products with ease</p>
           </div>
 
           {hasError && (
@@ -54,7 +53,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center space-x-4">
               <div className="flex items-center space-x-2 text-gray-400">
                 <Gamepad2 className="w-5 h-5" />
-                <span className="text-sm">Game Studios</span>
+                <span className="text-sm">Artists</span>
               </div>
               <div className="flex items-center space-x-2 text-gray-400">
                 <ShoppingBag className="w-5 h-5" />
@@ -76,8 +75,8 @@ export default function LoginPage() {
             </button>
           </a>
 
-          <p className="text-xs text-gray-500 mt-4">Secure authentication powered by Okta</p>
-          <p className="text-xs text-gray-500 mt-1">Secure authorization powered by Auth0 FGA</p>
+          <p className="text-xs text-gray-500 mt-4">Secure authentication powered by Auth0</p>
+          <p className="text-xs text-gray-500 mt-1">Secure authorization powered by Okta FGA</p>
         </div>
       </div>
     </div>
