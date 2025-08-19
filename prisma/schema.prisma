@@ -19,6 +19,7 @@ model Partner {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
+  songs          Song[]
   skus           Sku[]
   partnerUsers   PartnerUser[]
 }
@@ -62,6 +63,21 @@ enum PartnerUserStatus {
   active
   pending
   inactive
+}
+
+model Song {
+  id          String   @id @default(uuid())
+  partner     Partner  @relation(fields: [partner_id], references: [id])
+  partner_id  String
+  name        String
+  genre       String?
+  duration_s  Int?
+  play_count  Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@index([partner_id])
+  @@unique([partner_id, name]) // optional: ensure unique song names per artist
 }
 
 model Sku {
