@@ -1,8 +1,8 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
-import { useEffect, useState } from "react"
-import { Users, Plus, Trash2, Mail, ArrowLeft, Eye } from "lucide-react"
+import { useUser } from "@auth0/nextjs-auth0"
+import { useCallback, useEffect, useState } from "react"
+import { Users, Trash2, Mail, ArrowLeft, Eye } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import toast from "react-hot-toast"
@@ -19,11 +19,11 @@ interface User {
 interface Partner {
   id: string
   name: string
-  type: "game_studio" | "merch_supplier"
+  type: "artist" | "merch_supplier"
 }
 
 export default function PartnerUsersPage() {
-  const { user, isLoading } = useOktaAuth()
+  const { user, isLoading } = useUser()
   const params = useParams()
   const router = useRouter()
   const partnerId = params.id as string
@@ -36,36 +36,14 @@ export default function PartnerUsersPage() {
   const [inviteLastName, setInviteLastName] = useState("")
   const [inviteRole, setInviteRole] = useState("can_view")
   const [inviting, setInviting] = useState(false)
-  const [userCanView, setUserCanView] = useState(false)
-  const [userCanAdmin, setUserCanAdmin] = useState(false)
+  const [_userCanView, setUserCanView] = useState(false)
+  const [_userCanAdmin, setUserCanAdmin] = useState(false)
   const [userCanManageMembers, setUserCanManageMembers] = useState(false)
 
-  useEffect(() => {
-    if (!isLoading && user && partnerId) {
-      fetchUsers()
-    }
-  }, [user, isLoading, partnerId])
-
-  // Debug effect to log permission changes
-  useEffect(() => {
-    console.log("userCanManageMembers changed to:", userCanManageMembers)
-  }, [userCanManageMembers])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
+      const response = await fetch(`/api/partners/${partnerId}/users`)
 
-      const { accessToken } = await tokenResponse.json()
-
-      const response = await fetch(`/api/partners/${partnerId}/users`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
       if (response.ok) {
         const data = await response.json()
         console.log("Users API response:", data)
@@ -81,26 +59,28 @@ export default function PartnerUsersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [partnerId])
+
+  useEffect(() => {
+    if (!isLoading && user && partnerId) {
+      fetchUsers()
+    }
+  }, [user, isLoading, partnerId, fetchUsers])
+
+  // Debug effect to log permission changes
+  useEffect(() => {
+    console.log("userCanManageMembers changed to:", userCanManageMembers)
+  }, [userCanManageMembers])
 
   const handleInviteUser = async (e: React.FormEvent) => {
     e.preventDefault()
     setInviting(true)
 
     try {
-      // Get the access token
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       const response = await fetch(`/api/partners/${partnerId}/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           email: inviteEmail,
@@ -139,19 +119,8 @@ export default function PartnerUsersPage() {
     }
 
     try {
-      // Get the access token
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       const response = await fetch(`/api/partners/${partnerId}/users/${userId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       })
 
       if (response.ok) {

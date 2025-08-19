@@ -12,21 +12,16 @@ datasource db {
 model Partner {
   id             String   @id @default(uuid())
   name           String
-  type           PartnerType
+  type           String
   logo_url       String?  @db.Text
   organization_id String? @db.Text
   status         String   @default("active")
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  games          Game[]
+  songs          Song[]
   skus           Sku[]
   partnerUsers   PartnerUser[]
-}
-
-enum PartnerType {
-  game_studio
-  merch_supplier
 }
 
 model User {
@@ -70,36 +65,19 @@ enum PartnerUserStatus {
   inactive
 }
 
-model Game {
+model Song {
   id          String   @id @default(uuid())
   partner     Partner  @relation(fields: [partner_id], references: [id])
   partner_id  String
   name        String
-  type        String?
-  picture_url String?
-  status      String   @default("active")
+  genre       String?
+  duration_s  Int?
+  play_count  Int      @default(0)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  client_ids  ClientId[]
-}
-
-model ClientId {
-  id          String   @id @default(uuid())
-  game        Game     @relation(fields: [game_id], references: [id])
-  game_id     String
-  client_name String
-  client_type ClientType
-  client_id   String   @unique
-  created_at  DateTime @default(now())
-  status      String   @default("active")
-}
-
-enum ClientType {
-  native_mobile_android
-  native_mobile_ios
-  web
-  M2M
+  @@index([partner_id])
+  @@unique([partner_id, name]) // optional: ensure unique song names per artist
 }
 
 model Sku {
@@ -124,4 +102,3 @@ model AuditLog {
   details       Json?
   created_at    DateTime @default(now())
 }
-

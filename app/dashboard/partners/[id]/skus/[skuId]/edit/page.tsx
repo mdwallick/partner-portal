@@ -1,6 +1,6 @@
 "use client"
 
-import { useUser } from "@auth0/nextjs-auth0/client"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -9,7 +9,7 @@ import { ArrowLeft, ShoppingBag, Upload } from "lucide-react"
 interface Partner {
   id: string
   name: string
-  type: "game_studio" | "merch_supplier"
+  type: "artist" | "merch_supplier"
   logo_url?: string
 }
 
@@ -45,48 +45,48 @@ export default function EditProductPage() {
 
   useEffect(() => {
     if (!isLoading && user && partnerId && skuId) {
+      const fetchProductData = async () => {
+        try {
+          setLoading(true)
+
+          // Fetch partner details
+          const partnerResponse = await fetch(`/api/partners/${partnerId}`)
+          if (partnerResponse.ok) {
+            const partnerData = await partnerResponse.json()
+            setPartner(partnerData)
+          } else {
+            setError("Partner not found")
+            return
+          }
+
+          // Fetch product details
+          const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`)
+          if (skuResponse.ok) {
+            const skuData = await skuResponse.json()
+            setSku(skuData)
+
+            // Populate form with existing data
+            setFormData({
+              name: skuData.name || "",
+              category: skuData.category || "",
+              image_url: skuData.product_image_url || "",
+              status: skuData.status || "active",
+            })
+          } else {
+            setError("Product not found")
+            return
+          }
+        } catch (error) {
+          console.error("Error fetching product data:", error)
+          setError("Failed to load product data")
+        } finally {
+          setLoading(false)
+        }
+      }
+
       fetchProductData()
     }
   }, [user, isLoading, partnerId, skuId])
-
-  const fetchProductData = async () => {
-    try {
-      setLoading(true)
-
-      // Fetch partner details
-      const partnerResponse = await fetch(`/api/partners/${partnerId}`)
-      if (partnerResponse.ok) {
-        const partnerData = await partnerResponse.json()
-        setPartner(partnerData)
-      } else {
-        setError("Partner not found")
-        return
-      }
-
-      // Fetch product details
-      const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`)
-      if (skuResponse.ok) {
-        const skuData = await skuResponse.json()
-        setSku(skuData)
-
-        // Populate form with existing data
-        setFormData({
-          name: skuData.name || "",
-          category: skuData.category || "",
-          image_url: skuData.product_image_url || "",
-          status: skuData.status || "active",
-        })
-      } else {
-        setError("Product not found")
-        return
-      }
-    } catch (error) {
-      console.error("Error fetching product data:", error)
-      setError("Failed to load product data")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -119,7 +119,7 @@ export default function EditProductPage() {
       })
 
       if (response.ok) {
-        const updatedProduct = await response.json()
+        const _updatedProduct = await response.json()
         router.push(`/dashboard/partners/${partnerId}/skus/${skuId}`)
       } else {
         const errorData = await response.json()
@@ -287,7 +287,7 @@ export default function EditProductPage() {
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Provide a direct link to the product's image
+                Provide a direct link to the product&apos;s image
               </p>
             </div>
 

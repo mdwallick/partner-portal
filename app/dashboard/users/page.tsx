@@ -1,29 +1,17 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
-import {
-  Plus,
-  Search,
-  Filter,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Eye,
-  Mail,
-  Phone,
-  Calendar,
-  Shield,
-  ArrowLeft,
-} from "lucide-react"
+import { Shield, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 export default function UsersPage() {
-  const { user, isLoading } = useOktaAuth()
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterRole, setFilterRole] = useState("all")
+  const { user, isLoading } = useUser()
+  // const [users, setUsers] = useState([])
+  // const [loading, setLoading] = useState(true)
+  const [_loading, setLoading] = useState(true)
+  // const [searchTerm, setSearchTerm] = useState("")
+  // const [filterRole, setFilterRole] = useState("all")
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -78,8 +66,8 @@ export default function UsersPage() {
         <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
 
         <p className="text-gray-400 mb-8">
-          You don't have permission to access the global users management page. User management is
-          handled at the partner level.
+          You don&apos;t have permission to access the global users management page. User management
+          is handled at the partner level.
         </p>
 
         <div className="space-y-4">

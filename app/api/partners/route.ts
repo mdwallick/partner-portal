@@ -1,37 +1,24 @@
 import { NextRequest, NextResponse } from "next/server"
-import { generateId } from "@/lib/database"
+import { v4 as uuidv4 } from "uuid"
 import { prisma } from "@/lib/prisma"
 import { checkPermission, listObjects, writeTuple } from "@/lib/fga"
-import { requireAuth } from "@/lib/auth"
-import { oktaManagementAPI } from "@/lib/okta-management"
+import { auth0 } from "@/lib/auth0"
+import { auth0ManagementAPI } from "@/lib/auth0-management"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Log the Authorization header to see if access_token is being passed
-    const authHeader = request.headers.get("authorization")
-    //console.log('🔐 Authorization header received:', authHeader);
-
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const accessToken = authHeader.substring(7) // Remove 'Bearer ' prefix
-      //console.log('🔐 Access token received:', accessToken.substring(0, 20) + '...');
-    } else {
-      //console.log('🔐 No Authorization header or Bearer token found');
-    }
-
-    // Log all headers for debugging
-    //console.log('🔐 All headers received:', Object.fromEntries(request.headers.entries()));
-
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
     //console.log('TESTING AuthN');
-    console.log(`🔍 Fetching partners for user: ${user.email} (${user.sub})`)
-    console.log(`✅❗ FGA list all partner objects that ${user.sub} is related to as can_view`)
+    console.log(`🔍 Fetching partners for user: ${user?.email} (${user?.sub})`)
+    console.log(`✅❗ FGA list all partner objects that ${user?.sub} is related to as can_view`)
 
     // Use ListObjects to get all partners the user has access to
     // This will return all partners for super admins and only accessible partners for regular users
-    const accessiblePartnerIds = await listObjects(`user:${user.sub}`, "can_view", "partner")
+    const accessiblePartnerIds = await listObjects(`user:${user?.sub}`, "can_view", "partner")
 
     console.log(
-      `🗄️ FGA returned ${accessiblePartnerIds.length} partner IDs that 👤 ${user.email} is allowed to view:`,
+      `🗄️ FGA returned ${accessiblePartnerIds.length} partner IDs that 👤 ${user?.email} is allowed to view:`,
       accessiblePartnerIds
     )
 
@@ -59,12 +46,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth(request)
-    console.log(`👤 Creating partner for user: ${user.email} (${user.sub})`)
+    const session = await auth0.getSession()
+    const user = session?.user
+    console.log(`👤 Creating partner for user: ${user?.email} (${user?.sub})`)
 
     // Check if user has platform-level super admin access
     const hasSuperAdminAccess = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "super_admin",
       "platform:main"
     )
@@ -74,31 +62,35 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log("🔍 Request body:", body)
     const { name, type, logo_url } = body
 
     if (!name || !type) {
       return NextResponse.json({ error: "Name and type are required" }, { status: 400 })
     }
 
-    if (!["game_studio", "merch_supplier"].includes(type)) {
+    if (!["artist", "merch_supplier"].includes(type)) {
       return NextResponse.json({ error: "Invalid partner type" }, { status: 400 })
     }
 
-    const partnerId = generateId()
+    const partnerId = uuidv4()
 
     // Create group in Okta (equivalent to Auth0 Organization)
-    let groupId: string | undefined
+    let orgId: string | undefined
     try {
-      const groupName = `Partner: ${name} (${partnerId})`
-      const groupDescription = `Group for all members of Partner ${name} (${partnerId})`
+      const partner_name = `partner-${name.toLowerCase().replace(/\s+/g, "-")}`
+      const display_name = `Partner ${name}`
 
-      const group = await oktaManagementAPI.createGroup(groupName, groupDescription, {
-        partner_id: partnerId,
-        partner_type: type,
-        partner_name: name,
+      const org = await auth0ManagementAPI.createOrganization({
+        name: partner_name,
+        display_name: display_name,
+        metadata: {
+          partner_id: partnerId,
+          partner_type: type,
+        },
       })
-      groupId = group.id
-      console.log(`🚀 Created Okta group: ${groupId} (${groupName}) for partner: ${partnerId}`)
+      orgId = org.id
+      console.log(`🚀 Created organization: ${orgId} (${partner_name}) for partner: ${partnerId}`)
     } catch (error) {
       console.error("Error creating Okta group:", error)
       // Continue with partner creation even if group creation fails
@@ -110,7 +102,7 @@ export async function POST(request: NextRequest) {
         id: partnerId,
         name,
         type,
-        organization_id: groupId || null,
+        organization_id: orgId || null,
         logo_url: logo_url || null,
       },
     })

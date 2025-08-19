@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
-import { generateId } from "@/lib/database"
+import { v4 as uuidv4 } from "uuid"
 import { prisma } from "@/lib/prisma"
 import { checkPermission } from "@/lib/fga"
-import { requireAuth } from "@/lib/auth"
+import { auth0 } from "@/lib/auth0"
 
-export async function GET(request: NextRequest) {
+import type { PartnerUser } from "@/lib/types"
+
+export async function GET() {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
 
     // Get user's partner assignments
     const userRecord = await prisma.user.findUnique({
-      where: { auth0_user_id: user.sub },
+      where: { auth0_user_id: user?.sub },
       include: { partnerUsers: true },
     })
 
@@ -19,8 +22,8 @@ export async function GET(request: NextRequest) {
     }
 
     const activePartnerIds = userRecord.partnerUsers
-      .filter(pu => pu.status === "active")
-      .map(pu => pu.partner_id)
+      .filter((pu: PartnerUser) => pu.status === "active")
+      .map((pu: PartnerUser) => pu.partner_id)
     if (activePartnerIds.length === 0) return NextResponse.json([])
 
     const skus = await prisma.sku.findMany({
@@ -39,7 +42,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
 
     const body = await request.json()
     const { name, category, series, product_image_url } = body
@@ -50,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's partner assignments
     const userRecord = await prisma.user.findUnique({
-      where: { auth0_user_id: user.sub },
+      where: { auth0_user_id: user?.sub },
       include: { partnerUsers: true },
     })
 
@@ -59,8 +63,8 @@ export async function POST(request: NextRequest) {
     }
 
     const activePartnerIds = userRecord.partnerUsers
-      .filter(pu => pu.status === "active")
-      .map(pu => pu.partner_id)
+      .filter((pu: PartnerUser) => pu.status === "active")
+      .map((pu: PartnerUser) => pu.partner_id)
     const partner = await prisma.partner.findFirst({
       where: { id: { in: activePartnerIds }, type: "merch_supplier" },
     })
@@ -70,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create SKU
-    const skuId = generateId()
+    const skuId = uuidv4()
     const newSku = await prisma.sku.create({
       data: {
         id: skuId,

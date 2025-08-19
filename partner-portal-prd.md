@@ -23,7 +23,7 @@ Enable secure access for external partners (artists and producers) to manage the
 
 **Entities:**
 
-- `partner:{partner_id}` (has attribute `type`: `artist` or `producer`)
+- `partner:{partner_id}` (has attribute `type`: `artist` or `merch_supplier`)
 - `user:{user_id}`
 - `album:{album_id}`
 - `song:{song_id}`
@@ -31,7 +31,7 @@ Enable secure access for external partners (artists and producers) to manage the
 **Relationships:**
 
 - `partner` → owns many `albums` and `songs` (only if `type = artist`)
-- `partner` → manages many `albums` and `songs` (only if `type = producer`)
+- `partner` → manages many `SKUs` (only if `type = merch_supplier`)
 - `partner` → includes many `users`
 - `partner` → managed by `sme_admin`
 
@@ -51,7 +51,7 @@ Enable secure access for external partners (artists and producers) to manage the
   - Filter by partner type
 - Create a new partner (`/dashboard/partners/new`):
   - Name (required)
-  - Type (`artist` or `producer`)
+  - Type (`artist` or `merch_supplier`)
   - Returns `partner_id`
 - Edit existing partner (`/dashboard/partners/:partner_id/edit`):
   - Update name
@@ -60,7 +60,7 @@ Enable secure access for external partners (artists and producers) to manage the
 
 ### 3.2 Dashboard
 
-- Partner Name, Type (`artist` or `producer`) (`/dashboard`)
+- Partner Name, Type (`artist` or `merch_supplier`) (`/dashboard`)
 - Stats: Songs and albums (`/dashboard/stats`)
 - Quick links: Add Song / Add Album, View Profile (`/dashboard/albums/new`, `/dashboard/songs/new`, `/dashboard/profile`)
 
@@ -91,7 +91,7 @@ Enable secure access for external partners (artists and producers) to manage the
 - View only assigned partners (`/dashboard/admin/partners`)
 - Create new partner by entering (`/dashboard/admin/partners/new`):
   - Partner name (required)
-  - Type: `artist` or `producer` (required)
+  - Type: `artist` or `merch_supplier` (required)
   - Returns `partner_id` on creation
 - Edit existing partner (`/dashboard/admin/partners/:partner_id/edit`):
   - Modify name

@@ -1,46 +1,44 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkPermission, deleteTuples } from "@/lib/fga"
-import { requireAuth } from "@/lib/auth"
-import { oktaManagementAPI } from "@/lib/okta-management"
+import { auth0ManagementAPI } from "@/lib/auth0-management"
 import { prisma } from "@/lib/prisma"
+import { auth0 } from "@/lib/auth0"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const authHeader = request.headers.get("authorization")
-    //console.log('🔐 Authorization header received:', authHeader);
+    const session = await auth0.getSession()
+    const user = session?.user
+    const { id: partnerId } = await params
 
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const accessToken = authHeader.substring(7) // Remove 'Bearer ' prefix
-      //console.log('🔐 Access token received:', accessToken.substring(0, 20) + '...');
-    } else {
-      //console.log('🔐 No Authorization header or Bearer token found');
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await requireAuth(request)
-    const partnerId = params.id
-    console.log(`✅❓ FGA check: is user ${user.sub} related to partner ${partnerId} as can_view?`)
+    console.log(`✅❓ FGA check: is user ${user?.sub} related to partner ${partnerId} as can_view?`)
 
     // Check if user has platform-level super admin access
     const user_can_view = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_view",
       `partner:${partnerId}`
     )
     console.log(user_can_view)
 
     console.log(
-      `✅❓ FGA check: is user ${user.sub} related to partner ${partnerId} as can_manage_members?`
+      `✅❓ FGA check: is user ${user?.sub} related to partner ${partnerId} as can_manage_members?`
     )
     const user_can_manage_members = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_manage_members",
       `partner:${partnerId}`
     )
     console.log(user_can_manage_members)
 
-    console.log(`✅❓ FGA check: is user ${user.sub} related to partner ${partnerId} as can_admin?`)
+    console.log(
+      `✅❓ FGA check: is user ${user?.sub} related to partner ${partnerId} as can_admin?`
+    )
     const user_can_admin = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "can_admin",
       `partner:${partnerId}`
     )
@@ -72,10 +70,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAuth(request)
-    const partnerId = params.id
+    const session = await auth0.getSession()
+    const user = session?.user
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { id: partnerId } = await params
     const body = await request.json()
     const { name, logo_url } = body
 
@@ -105,11 +109,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         const newGroupName = `Partner: ${name} (${partnerId})`
         const newGroupDescription = `Group for all members of Partner ${name} (${partnerId})`
 
-        await oktaManagementAPI.updateGroup(
-          partnerData.organization_id,
-          newGroupName,
-          newGroupDescription
-        )
+        await auth0ManagementAPI.updateOrganization(partnerData.organization_id, {
+          name: newGroupName,
+          display_name: newGroupDescription,
+        })
       } catch (oktaError) {
         console.error("Error updating Okta group:", oktaError)
         // Continue with the update even if Okta group update fails
@@ -127,14 +130,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const user = await requireAuth(request)
-    const partnerId = params.id
+    const session = await auth0.getSession()
+    const user = session?.user
+    const { id: partnerId } = await params
 
     // Check if user has platform-level super admin access
     const hasSuperAdminAccess = await checkPermission(
-      `user:${user.sub}`,
+      `user:${user?.sub}`,
       "super_admin",
       "platform:main"
     )
@@ -168,15 +175,15 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     if (partnerData.organization_id) {
       try {
         console.log(`Deleting Okta group: ${partnerData.organization_id}`)
-        await oktaManagementAPI.deleteOrganization(partnerData.organization_id)
-        console.log(`✅ Deleted Okta group: ${partnerData.organization_id}`)
+        await auth0ManagementAPI.deleteOrganization(partnerData.organization_id)
+        console.log(`✅ Deleted organization: ${partnerData.organization_id}`)
       } catch (oktaError) {
-        console.error("Failed to delete Okta group:", oktaError)
+        console.error("Failed to delete organization:", oktaError)
         // Continue with the deletion even if Okta group deletion fails
         // The partner is already deleted from the database
       }
     } else {
-      console.log("No Okta group ID found, skipping Okta deletion")
+      console.log("No org ID found, skipping deletion")
     }
 
     // Clean up FGA tuples for this partner

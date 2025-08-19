@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { requireAuth } from "@/lib/auth"
+import { auth0 } from "@/lib/auth0"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const user = await requireAuth(request)
+    const session = await auth0.getSession()
+    const user = session?.user
 
     // Find user and their active partner assignments
     const userRecord = await prisma.user.findUnique({
-      where: { auth0_user_id: user.sub },
+      where: { auth0_user_id: user?.sub },
       include: { partnerUsers: true },
     })
 

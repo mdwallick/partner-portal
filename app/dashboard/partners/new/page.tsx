@@ -1,17 +1,18 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save } from "lucide-react"
+import { useUser } from "@auth0/nextjs-auth0"
+import Image from "next/image"
 
 export default function NewPartnerPage() {
-  const { user, isLoading } = useOktaAuth()
+  const { user, isLoading } = useUser()
   const router = useRouter()
   const [formData, setFormData] = useState({
     name: "",
-    type: "game_studio" as "game_studio" | "merch_supplier",
+    type: "artist" as "artist" | "merch_supplier",
     logo_url: "",
   })
   const [loading, setLoading] = useState(false)
@@ -23,19 +24,10 @@ export default function NewPartnerPage() {
     setError("")
 
     try {
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       const response = await fetch("/api/partners", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(formData),
       })
@@ -48,6 +40,7 @@ export default function NewPartnerPage() {
         setError(errorData.error || "Failed to create partner")
       }
     } catch (error) {
+      console.error("Error creating partner:", error)
       setError("An error occurred while creating the partner")
     } finally {
       setLoading(false)
@@ -136,13 +129,13 @@ export default function NewPartnerPage() {
                 required
                 className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
-                <option value="game_studio">Game Studio</option>
-                <option value="merch_supplier">Merchandise Supplier</option>
+                <option value="artist">Artist</option>
+                <option value="merch_supplier">Merch Supplier</option>
               </select>
               <p className="text-sm text-gray-400 mt-1">
-                {formData.type === "game_studio"
-                  ? "Game studios can create and manage games with client IDs"
-                  : "Merchandise suppliers can create and manage product SKUs"}
+                {formData.type === "artist"
+                  ? "Artists can create and manage albums and songs"
+                  : "Merch Suppliers can create and manage SKUs"}
               </p>
             </div>
 
@@ -161,7 +154,7 @@ export default function NewPartnerPage() {
                 placeholder="https://example.com/logo.png"
               />
               <p className="text-sm text-gray-400 mt-1">
-                Optional: URL to the partner's logo image
+                Optional: URL to the artist&apos;s logo image
               </p>
             </div>
 
@@ -172,7 +165,7 @@ export default function NewPartnerPage() {
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0 relative">
                     {formData.logo_url ? (
-                      <img
+                      <Image
                         src={formData.logo_url}
                         alt="Logo preview"
                         className="h-16 w-16 rounded-lg object-cover"

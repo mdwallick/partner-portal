@@ -1,21 +1,22 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save } from "lucide-react"
+import Image from "next/image"
 
 interface Partner {
   id: string
   name: string
-  type: "game_studio" | "merch_supplier"
+  type: "artist" | "merch_supplier"
   logo_url?: string
   created_at: string
 }
 
 export default function EditPartnerPage() {
-  const { user, isLoading } = useOktaAuth()
+  const { user, isLoading } = useUser()
   const params = useParams()
   const router = useRouter()
   const partnerId = params.id as string
@@ -31,44 +32,32 @@ export default function EditPartnerPage() {
 
   useEffect(() => {
     if (!isLoading && user && partnerId) {
+      const fetchPartnerData = async () => {
+        try {
+          setLoading(true)
+
+          const response = await fetch(`/api/partners/${partnerId}`)
+          if (response.ok) {
+            const partnerData = await response.json()
+            setPartner(partnerData)
+            setFormData({
+              name: partnerData.name,
+              logo_url: partnerData.logo_url || "",
+            })
+          } else {
+            setError("Partner not found")
+          }
+        } catch (error) {
+          console.error("Error fetching partner data:", error)
+          setError("Failed to load partner data")
+        } finally {
+          setLoading(false)
+        }
+      }
+
       fetchPartnerData()
     }
   }, [user, isLoading, partnerId])
-
-  const fetchPartnerData = async () => {
-    try {
-      setLoading(true)
-
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
-      const response = await fetch(`/api/partners/${partnerId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-      if (response.ok) {
-        const partnerData = await response.json()
-        setPartner(partnerData)
-        setFormData({
-          name: partnerData.name,
-          logo_url: partnerData.logo_url || "",
-        })
-      } else {
-        setError("Partner not found")
-      }
-    } catch (error) {
-      console.error("Error fetching partner data:", error)
-      setError("Failed to load partner data")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,6 +89,7 @@ export default function EditPartnerPage() {
         setError(errorData.error || "Failed to update partner")
       }
     } catch (error) {
+      console.error("Error updating partner:", error)
       setError("An error occurred while updating the partner")
     } finally {
       setSaving(false)
@@ -153,11 +143,11 @@ export default function EditPartnerPage() {
   }
 
   const getPartnerTypeLabel = (type: string) => {
-    return type === "game_studio" ? "Game Studio" : "Merchandise Supplier"
+    return type === "artist" ? "Artist" : "Merchandise Supplier"
   }
 
   const getPartnerTypeIcon = (type: string) => {
-    return type === "game_studio" ? "🎮" : "🛍️"
+    return type === "artist" ? "🎤" : "🛍️"
   }
 
   return (
@@ -181,7 +171,7 @@ export default function EditPartnerPage() {
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               {partner.logo_url ? (
-                <img
+                <Image
                   src={partner.logo_url}
                   alt={`${partner.name} logo`}
                   className="h-16 w-16 rounded-lg object-cover"
@@ -246,7 +236,7 @@ export default function EditPartnerPage() {
                 placeholder="https://example.com/logo.png"
               />
               <p className="text-sm text-gray-400 mt-1">
-                Optional: URL to the partner's logo image
+                Optional: URL to the partner&apos;s logo image
               </p>
             </div>
 
@@ -269,7 +259,7 @@ export default function EditPartnerPage() {
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0">
                     {formData.logo_url ? (
-                      <img
+                      <Image
                         src={formData.logo_url}
                         alt="Logo preview"
                         className="h-16 w-16 rounded-lg object-cover"

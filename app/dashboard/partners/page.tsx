@@ -1,14 +1,15 @@
 "use client"
 
-import { useOktaAuth } from "@/lib/use-okta-auth"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus, Search, Filter, Users, Shield, Eye } from "lucide-react"
+import Image from "next/image"
 
 interface Partner {
   id: string
   name: string
-  type: "game_studio" | "merch_supplier"
+  type: "artist" | "merch_supplier"
   logo_url?: string
   organization_id?: string
   created_at: string
@@ -21,12 +22,12 @@ interface UserRole {
 }
 
 export default function PartnersPage() {
-  const { user, isLoading } = useOktaAuth()
+  const { user, isLoading } = useUser()
   const [partners, setPartners] = useState<Partner[]>([])
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterType, setFilterType] = useState<"all" | "game_studio" | "merch_supplier">("all")
+  const [filterType, setFilterType] = useState<"all" | "artist" | "merch_supplier">("all")
 
   // Log when page renders
   useEffect(() => {
@@ -43,19 +44,7 @@ export default function PartnersPage() {
 
   const fetchUserRole = async () => {
     try {
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
-      const response = await fetch("/api/admin/test-permissions", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
+      const response = await fetch("/api/admin/test-permissions")
       if (response.ok) {
         const data = await response.json()
         setUserRole({
@@ -72,20 +61,8 @@ export default function PartnersPage() {
     try {
       setLoading(true)
 
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       // Call the partners API with the Authorization header
-      const response = await fetch("/api/partners", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
+      const response = await fetch("/api/partners")
 
       if (response.ok) {
         const data = await response.json()
@@ -107,15 +84,15 @@ export default function PartnersPage() {
   })
 
   const getPartnerTypeLabel = (type: string) => {
-    return type === "game_studio" ? "Game Studio" : "Merchandise Supplier"
+    return type === "artist" ? "Artist" : "Merchandise Supplier"
   }
 
   const getPartnerTypeIcon = (type: string) => {
-    return type === "game_studio" ? "🎮" : "🛍️"
+    return type === "artist" ? "🎸" : "🛍️"
   }
 
   const getPartnerTypeColor = (type: string) => {
-    return type === "game_studio" ? "bg-blue-900 text-blue-300" : "bg-green-900 text-green-300"
+    return type === "artist" ? "bg-blue-900 text-blue-300" : "bg-green-900 text-green-300"
   }
 
   if (isLoading || loading) {
@@ -153,7 +130,7 @@ export default function PartnersPage() {
               {userRole?.is_cr_super_admin && (
                 <div className="flex items-center mt-2 text-sm text-orange-500">
                   <Shield className="h-4 w-4 mr-1" />
-                  CR Super Admin Access
+                  SME Super Admin Access
                 </div>
               )}
             </div>
@@ -229,9 +206,11 @@ export default function PartnersPage() {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
                           {partner.logo_url ? (
-                            <img
+                            <Image
                               src={partner.logo_url}
                               alt={`${partner.name} logo`}
+                              width={40}
+                              height={40}
                               className="h-10 w-10 rounded-lg object-cover"
                               onError={e => {
                                 // Hide the broken image and show fallback
@@ -342,9 +321,9 @@ export default function PartnersPage() {
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-400">
-                {partners.filter(p => p.type === "game_studio").length}
+                {partners.filter(p => p.type === "artist").length}
               </p>
-              <p className="text-sm text-gray-400">Game Studios</p>
+              <p className="text-sm text-gray-400">Artists</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-400">
@@ -356,7 +335,7 @@ export default function PartnersPage() {
               <p className="text-2xl font-bold text-purple-400">
                 {partners.filter(p => p.assigned_cr_admin).length}
               </p>
-              <p className="text-sm text-gray-400">Assigned to CR Admin</p>
+              <p className="text-sm text-gray-400">Assigned to SME Admin</p>
             </div>
           </div>
         </div>
@@ -364,30 +343,30 @@ export default function PartnersPage() {
         {/* CR Super Admin Actions */}
         {userRole?.is_cr_super_admin && (
           <div className="mt-8 bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">CR Super Admin Actions</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">SME Super Admin Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Link
-                href="/dashboard/cr-super-admin/manage-admins"
+                href="/dashboard/super-admin/manage-admins"
                 className="flex items-center p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors"
               >
                 <Shield className="h-8 w-8 text-purple-400 mr-3" />
                 <div>
-                  <p className="font-medium text-white">Manage CR Admins</p>
-                  <p className="text-sm text-gray-400">Add or remove CR admin roles</p>
+                  <p className="font-medium text-white">Manage SME Admins</p>
+                  <p className="text-sm text-gray-400">Add or remove SME admin roles</p>
                 </div>
               </Link>
               <Link
-                href="/dashboard/cr-super-admin/assignments"
+                href="/dashboard/super-admin/assignments"
                 className="flex items-center p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors"
               >
                 <Users className="h-8 w-8 text-blue-400 mr-3" />
                 <div>
                   <p className="font-medium text-white">Partner Assignments</p>
-                  <p className="text-sm text-gray-400">Assign partners to CR admins</p>
+                  <p className="text-sm text-gray-400">Assign partners to SME admins</p>
                 </div>
               </Link>
               <Link
-                href="/dashboard/cr-super-admin/stats"
+                href="/dashboard/super-admin/stats"
                 className="flex items-center p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors"
               >
                 <svg

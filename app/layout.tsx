@@ -15,8 +15,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   console.log("🔄 Root Layout Rendered")
 
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className="h-full bg-gray-900">
+      <body className="min-h-screen bg-gray-900">
         <Auth0Provider>
           {children}
           <Toaster position="top-right" />

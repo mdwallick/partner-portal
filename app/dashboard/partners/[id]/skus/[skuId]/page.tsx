@@ -1,15 +1,16 @@
 "use client"
 
-import { useUser } from "@auth0/nextjs-auth0/client"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Edit, Trash2, ShoppingBag } from "lucide-react"
+import Image from "next/image"
 
 interface Partner {
   id: string
   name: string
-  type: "game_studio" | "merch_supplier"
+  type: "artist" | "merch_supplier"
   logo_url?: string
 }
 
@@ -37,52 +38,36 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (!isLoading && user && partnerId && skuId) {
+      const fetchSkuData = async () => {
+        try {
+          setLoading(true)
+
+          // Fetch partner details
+          const partnerResponse = await fetch(`/api/partners/${partnerId}`)
+          if (partnerResponse.ok) {
+            const partnerData = await partnerResponse.json()
+            setPartner(partnerData)
+          }
+
+          // Fetch SKU details
+          const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`)
+          if (skuResponse.ok) {
+            const skuData = await skuResponse.json()
+            setSku(skuData)
+          } else {
+            setError("SKU not found")
+          }
+        } catch (error) {
+          console.error("Error fetching SKU data:", error)
+          setError("Failed to load SKU data")
+        } finally {
+          setLoading(false)
+        }
+      }
+
       fetchSkuData()
     }
   }, [user, isLoading, partnerId, skuId])
-
-  const fetchSkuData = async () => {
-    try {
-      setLoading(true)
-
-      // Get the access token from the API
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
-      // Fetch partner details
-      const partnerResponse = await fetch(`/api/partners/${partnerId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-      if (partnerResponse.ok) {
-        const partnerData = await partnerResponse.json()
-        setPartner(partnerData)
-      }
-
-      // Fetch SKU details
-      const skuResponse = await fetch(`/api/partners/${partnerId}/skus/${skuId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-      if (skuResponse.ok) {
-        const skuData = await skuResponse.json()
-        setSku(skuData)
-      } else {
-        setError("SKU not found")
-      }
-    } catch (error) {
-      console.error("Error fetching SKU data:", error)
-      setError("Failed to load SKU data")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleDeleteSku = async () => {
     if (!confirm("Are you sure you want to delete this SKU? This action cannot be undone.")) {
@@ -90,19 +75,8 @@ export default function ProductDetailPage() {
     }
 
     try {
-      // Get the access token
-      const tokenResponse = await fetch("/api/auth/token")
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token")
-      }
-
-      const { accessToken } = await tokenResponse.json()
-
       const response = await fetch(`/api/partners/${partnerId}/skus/${skuId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       })
 
       if (response.ok) {
@@ -176,7 +150,7 @@ export default function ProductDetailPage() {
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0">
                 {sku.product_image_url ? (
-                  <img
+                  <Image
                     src={sku.product_image_url}
                     alt={`${sku.name} image`}
                     className="h-20 w-20 rounded-lg object-cover"
@@ -312,7 +286,7 @@ export default function ProductDetailPage() {
           {sku.product_image_url && (
             <div className="mt-6">
               <h3 className="text-sm font-medium text-gray-500 mb-2">Product Image</h3>
-              <img
+              <Image
                 src={sku.product_image_url}
                 alt={sku.name}
                 className="h-48 w-48 rounded-lg object-cover"
