@@ -5,8 +5,7 @@ async function main() {
   await prisma.partner.deleteMany({})
   await prisma.partnerUser.deleteMany({})
   await prisma.user.deleteMany({})
-  await prisma.game.deleteMany({})
-  await prisma.clientId.deleteMany({})
+  await prisma.song.deleteMany({})
   await prisma.sku.deleteMany({})
   await prisma.auditLog.deleteMany({})
   // Add more tables here if needed

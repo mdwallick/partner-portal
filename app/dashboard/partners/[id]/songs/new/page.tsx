@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Music2 } from "lucide-react"
 
-export default function NewSongPage({ params }: { params: { id: string } }) {
+export default function NewSongPage() {
   const router = useRouter()
-  const partnerId = params.id
+  const params = useParams()
+  const partnerId = params.id as string
   const [name, setName] = useState("")
   const [genre, setGenre] = useState("")
   const [minutes, setMinutes] = useState("")
