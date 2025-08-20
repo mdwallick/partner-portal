@@ -4,17 +4,20 @@ import { useUser } from "@auth0/nextjs-auth0"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, Save, Music } from "lucide-react"
 import toast from "react-hot-toast"
-import Image from "next/image"
 
-interface Game {
+interface Song {
   id: string
   name: string
-  type?: string
-  picture_url?: string
+  genre?: string
+  duration_s?: number
+  play_count: number
   created_at: string
-  client_ids_count: number
+  partner_id: string
+  partner_name: string
+  partner_type: string
+  userCanAdmin: boolean
 }
 
 interface Partner {
@@ -23,7 +26,7 @@ interface Partner {
   type: "artist" | "merch_supplier"
 }
 
-export default function EditGamePage() {
+export default function EditSongPage() {
   const { user, isLoading } = useUser()
   const params = useParams()
   const router = useRouter()
@@ -31,11 +34,11 @@ export default function EditGamePage() {
   const songId = params.songId as string
 
   const [_partner, setPartner] = useState<Partner | null>(null)
-  const [game, setGame] = useState<Game | null>(null)
+  const [song, setSong] = useState<Song | null>(null)
   const [formData, setFormData] = useState({
     name: "",
-    type: "",
-    picture_url: "",
+    genre: "",
+    duration_s: "",
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -50,31 +53,31 @@ export default function EditGamePage() {
         try {
           setLoading(true)
 
-          // Fetch game details (includes partner info)
-          const gameResponse = await fetch(`/api/partners/${partnerId}/songs/${songId}`, {
+          // Fetch song details (includes partner info)
+          const songResponse = await fetch(`/api/partners/${partnerId}/songs/${songId}`, {
             headers: { "Content-Type": "application/json" },
           })
-          if (gameResponse.ok) {
-            const gameData = await gameResponse.json()
-            setGame(gameData)
+          if (songResponse.ok) {
+            const songData = await songResponse.json()
+            setSong(songData)
             setFormData({
-              name: gameData.name,
-              type: gameData.type || "",
-              picture_url: gameData.picture_url || "",
+              name: songData.name,
+              genre: songData.genre || "",
+              duration_s: songData.duration_s ? songData.duration_s.toString() : "",
             })
 
-            // Set partner info from game response
+            // Set partner info from song response
             setPartner({
-              id: gameData.partner_id,
-              name: gameData.partner_name,
-              type: gameData.partner_type,
+              id: songData.partner_id,
+              name: songData.partner_name,
+              type: songData.partner_type,
             })
 
-            // Set permissions based on game data response
-            setCanView(true) // If we got the game data, user can view
-            setCanAdmin(gameData.userCanAdmin || false) // Set admin permission from response
+            // Set permissions based on song data response
+            setCanView(true) // If we got the song data, user can view
+            setCanAdmin(songData.userCanAdmin || false) // Set admin permission from response
           } else {
-            setError("Game not found")
+            setError("Song not found")
           }
         } catch (error) {
           console.error("Error fetching data:", error)
@@ -101,15 +104,15 @@ export default function EditGamePage() {
       })
 
       if (response.ok) {
-        toast.success("Game updated successfully!")
+        toast.success("Song updated successfully!")
         router.push(`/dashboard/partners/${partnerId}/songs/${songId}`)
       } else {
         const errorData = await response.json()
-        setError(errorData.error || "Failed to update game")
+        setError(errorData.error || "Failed to update song")
       }
     } catch (error) {
       console.error("Error updating song:", error)
-      setError("An error occurred while updating the game")
+      setError("An error occurred while updating the song")
     } finally {
       setSaving(false)
     }
@@ -121,6 +124,12 @@ export default function EditGamePage() {
       ...prev,
       [name]: value,
     }))
+  }
+
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
   if (isLoading || loading) {
@@ -142,17 +151,17 @@ export default function EditGamePage() {
     )
   }
 
-  if (error || !game) {
+  if (error || !song) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Game Not Found</h1>
-          <p className="text-gray-400 mb-6">{error || "The requested game could not be found."}</p>
+          <h1 className="text-2xl font-bold text-white mb-4">Song Not Found</h1>
+          <p className="text-gray-400 mb-6">{error || "The requested song could not be found."}</p>
           <Link
-            href={`/dashboard/partners/${partnerId}/games`}
+            href={`/dashboard/partners/${partnerId}/songs`}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
           >
-            Back to Games
+            Back to Songs
           </Link>
         </div>
       </div>
@@ -165,12 +174,12 @@ export default function EditGamePage() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
-          <p className="text-gray-400 mb-6">You don&apos;t have permission to view this game.</p>
+          <p className="text-gray-400 mb-6">You don&apos;t have permission to view this song.</p>
           <Link
-            href={`/dashboard/partners/${partnerId}/games`}
+            href={`/dashboard/partners/${partnerId}/songs`}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
           >
-            Back to Games
+            Back to Songs
           </Link>
         </div>
       </div>
@@ -187,39 +196,32 @@ export default function EditGamePage() {
             className="inline-flex items-center text-sm text-gray-400 hover:text-white mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Game
+            Back to Song
           </Link>
-          <h1 className="text-3xl font-bold text-white">Edit Game</h1>
-          <p className="text-gray-400 mt-2">Update game information</p>
+          <h1 className="text-3xl font-bold text-white">Edit Song</h1>
+          <p className="text-gray-400 mt-2">Update song information</p>
         </div>
 
-        {/* Game Info */}
+        {/* Song Info */}
         <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 mb-8">
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
-              {game.picture_url ? (
-                <Image
-                  src={game.picture_url}
-                  alt={`${game.name} image`}
-                  className="h-16 w-16 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="h-16 w-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white text-2xl font-bold">
-                  🎮
-                </div>
-              )}
+              <div className="h-16 w-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center text-white text-2xl font-bold">
+                🎵
+              </div>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">{game.name}</h2>
+              <h2 className="text-xl font-semibold text-white">{song.name}</h2>
               <div className="flex items-center space-x-2 mt-1">
-                <span className="text-lg">🎮</span>
-                <span className="text-gray-400">{game.type || "Game"}</span>
+                <span className="text-lg">🎵</span>
+                <span className="text-gray-400">{song.genre || "No genre"}</span>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                Created {new Date(game.created_at).toLocaleDateString()}
+                Created {new Date(song.created_at).toLocaleDateString()}
               </p>
               <p className="text-sm text-gray-500">
-                {game.client_ids_count} client ID{game.client_ids_count !== 1 ? "s" : ""}
+                {song.duration_s ? formatDuration(song.duration_s) : "No duration"} •{" "}
+                {song.play_count} play{song.play_count !== 1 ? "s" : ""}
               </p>
             </div>
           </div>
@@ -230,7 +232,7 @@ export default function EditGamePage() {
           {!canAdmin && (
             <div className="bg-yellow-900 border border-yellow-700 rounded-md p-4 mb-6">
               <p className="text-yellow-200 text-sm">
-                You have view-only access to this game. Contact an administrator to make changes.
+                You have view-only access to this song. Contact an administrator to make changes.
               </p>
             </div>
           )}
@@ -242,10 +244,10 @@ export default function EditGamePage() {
               </div>
             )}
 
-            {/* Game Name */}
+            {/* Song Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                Game Name *
+                Song Name *
               </label>
               <input
                 type="text"
@@ -256,44 +258,48 @@ export default function EditGamePage() {
                 required
                 disabled={!canAdmin}
                 className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-white placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="Enter game name"
+                placeholder="Enter song name"
               />
             </div>
 
-            {/* Game Type */}
+            {/* Genre */}
             <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-300 mb-2">
-                Game Type
+              <label htmlFor="genre" className="block text-sm font-medium text-gray-300 mb-2">
+                Genre
               </label>
               <input
                 type="text"
-                id="type"
-                name="type"
-                value={formData.type}
+                id="genre"
+                name="genre"
+                value={formData.genre}
                 onChange={handleInputChange}
                 disabled={!canAdmin}
                 className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-white placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="e.g., Action, RPG, Strategy"
+                placeholder="e.g., Rock, Pop, Jazz, Electronic"
               />
-              <p className="mt-1 text-sm text-gray-400">Optional: Type or genre of the game</p>
+              <p className="mt-1 text-sm text-gray-400">Optional: Musical genre or style</p>
             </div>
 
-            {/* Picture URL */}
+            {/* Duration */}
             <div>
-              <label htmlFor="picture_url" className="block text-sm font-medium text-gray-300 mb-2">
-                Picture URL
+              <label htmlFor="duration_s" className="block text-sm font-medium text-gray-300 mb-2">
+                Duration (seconds)
               </label>
               <input
-                type="url"
-                id="picture_url"
-                name="picture_url"
-                value={formData.picture_url}
+                type="number"
+                id="duration_s"
+                name="duration_s"
+                value={formData.duration_s}
                 onChange={handleInputChange}
+                min="0"
+                step="1"
                 disabled={!canAdmin}
                 className="w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-white placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="https://example.com/game-image.jpg"
+                placeholder="180"
               />
-              <p className="mt-1 text-sm text-gray-400">Optional: URL to the game&apos;s image</p>
+              <p className="mt-1 text-sm text-gray-400">
+                Optional: Duration in seconds (e.g., 180 for 3:00)
+              </p>
             </div>
 
             {/* Preview */}
@@ -301,28 +307,19 @@ export default function EditGamePage() {
               <div className="border border-gray-600 rounded-lg p-4 bg-gray-700">
                 <h3 className="text-sm font-medium text-gray-300 mb-3">Preview</h3>
                 <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0 relative">
-                    {formData.picture_url ? (
-                      <Image
-                        src={formData.picture_url}
-                        alt="Game preview"
-                        className="h-16 w-16 rounded-lg object-cover"
-                        onError={e => {
-                          // Hide the broken image and show fallback
-                          e.currentTarget.style.display = "none"
-                          e.currentTarget.nextElementSibling?.classList.remove("hidden")
-                        }}
-                      />
-                    ) : null}
-                    <div
-                      className={`h-16 w-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white text-2xl font-bold ${formData.picture_url ? "hidden" : ""}`}
-                    >
-                      🎮
+                  <div className="flex-shrink-0">
+                    <div className="h-16 w-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center text-white text-2xl font-bold">
+                      🎵
                     </div>
                   </div>
                   <div>
                     <h4 className="text-lg font-semibold text-white">{formData.name}</h4>
-                    <p className="text-sm text-gray-400">{formData.type || "Game"}</p>
+                    <p className="text-sm text-gray-400">
+                      {formData.genre || "No genre"} •{" "}
+                      {formData.duration_s
+                        ? formatDuration(parseInt(formData.duration_s))
+                        : "No duration"}
+                    </p>
                   </div>
                 </div>
               </div>
