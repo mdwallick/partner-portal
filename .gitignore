@@ -21,6 +21,10 @@ cypress.env.json
 # production
 /build
 
+# TypeScript
+*.tsbuildinfo
+.tsbuildinfo
+
 # misc
 .DS_Store
 *.pem
